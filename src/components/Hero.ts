@@ -1,6 +1,6 @@
 /**
  * Hero Section Component
- * Full-screen hero with synced background carousel and content
+ * Full-screen hero with synced background carousel and smooth content transitions
  */
 
 import { onCarouselChange, type CarouselItem } from '@utils/carousel'
@@ -49,35 +49,42 @@ export function createHero(config: HeroConfig): HTMLElement {
     vignette.style.background = 'radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%)'
     hero.appendChild(vignette)
 
-    // Content - left aligned with titles and descriptions
+    // Content - left aligned with fixed height container to prevent layout shift
     const content = document.createElement('div')
     content.className = 'relative z-10 max-w-7xl mx-auto px-8 md:px-16 py-32 w-full'
 
-    const contentInner = document.createElement('div')
-    contentInner.className = 'max-w-xl'
+    // Fixed height content wrapper to prevent layout shift
+    const contentWrapper = document.createElement('div')
+    contentWrapper.className = 'relative h-[280px] md:h-[300px]' // Fixed height
 
-    // Title and description elements for each carousel item
+    // Content elements for each carousel item - stacked with absolute positioning
     const contentElements: HTMLElement[] = []
 
     carouselItems.forEach((item, index) => {
         const itemContent = document.createElement('div')
-        itemContent.className = `transition-opacity duration-700 ${index === 0 ? 'opacity-100' : 'opacity-0 absolute inset-0'}`
+        itemContent.className = `absolute inset-0 flex flex-col justify-center transition-all duration-700 ease-out ${index === 0 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`
+        itemContent.style.maxWidth = '600px'
 
         const title = document.createElement('h1')
-        title.className = 'text-white text-4xl md:text-5xl lg:text-6xl font-bold tracking-wider uppercase mb-6 font-display'
+        title.className = 'text-white text-4xl md:text-5xl lg:text-6xl font-bold tracking-wider uppercase mb-4 font-display'
         title.textContent = item.title
         itemContent.appendChild(title)
 
         const desc = document.createElement('p')
-        desc.className = 'text-gray-300 text-lg md:text-xl leading-relaxed mb-10'
+        desc.className = 'text-gray-300 text-base md:text-lg leading-relaxed'
         desc.textContent = item.description
         itemContent.appendChild(desc)
 
         contentElements.push(itemContent)
-        contentInner.appendChild(itemContent)
+        contentWrapper.appendChild(itemContent)
     })
 
-    // CTA Button (always visible)
+    content.appendChild(contentWrapper)
+
+    // CTA Button (always visible, below the content wrapper)
+    const ctaWrapper = document.createElement('div')
+    ctaWrapper.className = 'mt-10'
+
     const cta = document.createElement('a')
     cta.href = ctaHref
     cta.className = `
@@ -96,9 +103,9 @@ export function createHero(config: HeroConfig): HTMLElement {
       <path d="M12 5v14M19 12l-7 7-7-7"/>
     </svg>
   `
-    contentInner.appendChild(cta)
+    ctaWrapper.appendChild(cta)
+    content.appendChild(ctaWrapper)
 
-    content.appendChild(contentInner)
     hero.appendChild(content)
 
     // Listen for carousel changes
@@ -114,14 +121,14 @@ export function createHero(config: HeroConfig): HTMLElement {
             }
         })
 
-        // Update content
+        // Update content with smooth slide animation
         contentElements.forEach((el, i) => {
             if (i === index) {
-                el.classList.remove('opacity-0', 'absolute', 'inset-0')
-                el.classList.add('opacity-100')
+                el.classList.remove('opacity-0', 'translate-y-4')
+                el.classList.add('opacity-100', 'translate-y-0')
             } else {
-                el.classList.remove('opacity-100')
-                el.classList.add('opacity-0', 'absolute', 'inset-0')
+                el.classList.remove('opacity-100', 'translate-y-0')
+                el.classList.add('opacity-0', 'translate-y-4')
             }
         })
     })

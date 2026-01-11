@@ -14,6 +14,7 @@ export interface Game {
     logo: string
     studioLogo?: string
     description?: string
+    ownedBy?: string          // Owner/studio name (e.g., "Interworks Inc")
     link?: string
     youtubeVideoId?: string
     spotifyAlbums?: readonly SpotifyAlbum[]  // Array of Spotify albums
@@ -186,6 +187,13 @@ function createGameCard(game: Game): HTMLElement {
     // Meta info
     const metaRow = document.createElement('div')
     metaRow.className = 'flex flex-wrap gap-6 text-sm text-gray-400 mb-8'
+
+    // Owned By
+    if (game.ownedBy) {
+        const ownedByEl = document.createElement('div')
+        ownedByEl.innerHTML = `<span class="text-gray-500">Owned By:</span> <span class="text-indigo-400">${game.ownedBy}</span>`
+        metaRow.appendChild(ownedByEl)
+    }
 
     if (game.platforms && game.platforms.length > 0) {
         const platformsEl = document.createElement('div')

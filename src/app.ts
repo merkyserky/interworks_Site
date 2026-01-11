@@ -3,7 +3,7 @@
  * Initializes and renders all components
  */
 
-import { createHeader, createHero, createGamesSection, createHeroFooter, createPageFooter } from '@components/index'
+import { createHeader, createHero, createGamesSection, createHeroFooter, createPageFooter, createSocialModal } from '@components/index'
 import { initCarousel, type CarouselItem } from '@utils/carousel'
 import { onDOMReady } from '@utils/dom'
 
@@ -13,21 +13,38 @@ const CAROUSEL_ITEMS: CarouselItem[] = [
         logo: { type: 'text', value: 'INTERWORKS INC' },
         heroBackground: '/interworks_hero_background.png',
         title: 'INTERWORKS INC',
-        description: 'idk man add some egg stuff',
+        description: 'Owned by EggCow',
     },
     {
         logo: { type: 'image', value: '/studios/astral_Core.png', alt: 'Astral Core' },
         heroBackground: '/astral_hero_background.png',
         title: 'ASTRAL CORE',
-        description: 'man im astral core ',
+        description: 'Astral Core is a roblox development studio owned by plasmix2 and wafflynutria116.',
+    },
+]
+
+// Studio social links for modal
+const STUDIO_SOCIALS = [
+    {
+        studioName: 'Interworks Inc',
+        discord: 'https://discord.gg/C2wGG8KHRr',
+        roblox: 'https://www.roblox.com/communities/34862200/Interworks-Inc#!/',
+        // youtube: 'https://youtube.com/@interworksinc', // Add when available
+    },
+    {
+        studioName: 'Astral Core',
+        studioLogo: '/studios/astral_Core.png',
+        discord: 'https://discord.gg/5nJgPbdTpy', // Replace with actual invite
+        roblox: 'https://www.roblox.com/communities/13408947/Astral-Core-Games#!/', // Replace with actual group
+        youtube: 'https://www.youtube.com/@plasmix2', // Add when available
     },
 ]
 
 // Site configuration
 const SITE_CONFIG = {
     company: {
-        name: 'INTERWORKS INC',
-        displayName: 'Interworks Inc',
+        name: 'ASTRAL CORE + INTERWORKS INC',
+        displayName: 'Astral Core + Interworks Inc',
     },
     navigation: [
         { label: 'Games', href: '#games' },
@@ -46,40 +63,25 @@ const SITE_CONFIG = {
                 name: 'Ashmoor Casefiles',
                 logo: '/ashmoor.png',
                 description: 'After the disaster, when humanity fell onto itself, you the traveler came upon the small town of Ashmoor. Discover unsolved cases, encountering friends and foes on your journey, and by your side a handy shotgun which feeds off you blood. The heart is like a rose, like the one that bloomed years ago.',
+                ownedBy: 'Interworks Inc',
                 status: 'coming-soon' as const,
                 genre: 'Horror Mystery',
-                // spotifyAlbums: [
-                //     { name: 'OST Vol. 1', spotifyId: 'ALBUM_ID_HERE' },
-                //     { name: 'Ambience', spotifyId: 'ALBUM_ID_HERE' },
-                // ],
             },
             {
                 id: 'unseen-floors',
                 name: 'Unseen Floors',
                 logo: '/LogoUnseen.png',
                 description: 'There is no description at this time.',
+                ownedBy: 'Astral Core',
                 status: 'coming-soon' as const,
                 genre: 'Horror',
                 youtubeVideoId: '23Mq7j-O88E',
-                // link: 'https://www.roblox.com/games/113322775247353/SPOOKY-FLOORS',
                 spotifyAlbums: [
                     { name: 'OST Vol. 1', spotifyId: '78ZlzFurP42walRtyiRbN8' },
                 ],
             },
         ],
     },
-    social: [
-        {
-            type: 'discord' as const,
-            label: 'Discord',
-            href: 'https://discord.gg/C2wGG8KHRr',
-        },
-        {
-            type: 'roblox' as const,
-            label: 'Roblox Group',
-            href: 'https://www.roblox.com/communities/34862200/Interworks-Inc#!/',
-        },
-    ],
 } as const
 
 /**
@@ -97,6 +99,11 @@ export function initApp(): void {
     initCarousel({
         items: CAROUSEL_ITEMS,
         interval: 5000,
+    })
+
+    // Create social modal
+    createSocialModal({
+        studios: STUDIO_SOCIALS,
     })
 
     // Render Header with synced logo carousel
@@ -118,7 +125,6 @@ export function initApp(): void {
     const heroFooter = createHeroFooter({
         companyName: SITE_CONFIG.company.displayName,
         year: 2026,
-        socialLinks: SITE_CONFIG.social,
     })
     app.appendChild(heroFooter)
 
@@ -134,11 +140,10 @@ export function initApp(): void {
     const pageFooter = createPageFooter({
         companyName: SITE_CONFIG.company.displayName,
         year: 2026,
-        socialLinks: SITE_CONFIG.social,
     })
     app.appendChild(pageFooter)
 
-    console.log('🚀 INTERWORKS INC - App initialized')
+    console.log('🚀 ASTRAL CORE + INTERWORKS INC - App initialized')
 }
 
 // Auto-initialize when DOM is ready
