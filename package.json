@@ -1,13 +1,21 @@
 {
 	"name": "interworksdevs",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"private": true,
+	"type": "module",
 	"scripts": {
-		"deploy": "wrangler deploy",
-		"dev": "wrangler dev",
-		"start": "wrangler dev"
+		"dev": "vite",
+		"build": "tsc && vite build",
+		"preview": "vite preview",
+		"deploy": "npm run build && wrangler deploy",
+		"wrangler:dev": "npm run build && wrangler dev"
 	},
 	"devDependencies": {
+		"@tailwindcss/vite": "^4.1.18",
+		"tailwindcss": "^4.1.18",
+		"terser": "^5.44.1",
+		"typescript": "^5.7.3",
+		"vite": "^7.3.1",
 		"wrangler": "^4.58.0"
 	}
 }
