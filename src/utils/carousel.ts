@@ -10,6 +10,8 @@ export interface CarouselItem {
         alt?: string
     }
     heroBackground: string
+    title: string
+    description: string
 }
 
 export interface CarouselConfig {

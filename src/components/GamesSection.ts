@@ -1,7 +1,12 @@
 /**
  * Games Section Component
- * Full-width games showcase with video backgrounds
+ * Full-width games showcase with video backgrounds and Spotify embeds
  */
+
+export interface SpotifyAlbum {
+    name: string
+    spotifyId: string  // The Spotify album/playlist ID
+}
 
 export interface Game {
     id: string
@@ -11,6 +16,7 @@ export interface Game {
     description?: string
     link?: string
     youtubeVideoId?: string
+    spotifyAlbums?: readonly SpotifyAlbum[]  // Array of Spotify albums
     status?: 'coming-soon' | 'playable' | 'beta' | 'in-development'
     releaseDate?: string
     genre?: string
@@ -71,11 +77,9 @@ function createGameCard(game: Game): HTMLElement {
 
     // Video or image background - FULL WIDTH
     if (game.youtubeVideoId) {
-        // Video background container
         const videoBg = document.createElement('div')
         videoBg.className = 'absolute inset-0 z-0'
 
-        // YouTube embed with all UI hidden
         const videoWrapper = document.createElement('div')
         videoWrapper.className = 'absolute inset-0'
         videoWrapper.style.pointerEvents = 'none'
@@ -90,13 +94,11 @@ function createGameCard(game: Game): HTMLElement {
         videoBg.appendChild(videoWrapper)
         card.appendChild(videoBg)
 
-        // Gradient overlay on left side for text readability
         const gradient = document.createElement('div')
         gradient.className = 'absolute inset-0 z-[1]'
         gradient.style.background = 'linear-gradient(to right, rgba(10,10,18,0.95) 0%, rgba(10,10,18,0.8) 30%, rgba(10,10,18,0.3) 60%, transparent 100%)'
         card.appendChild(gradient)
     } else {
-        // Static background with logo
         const bgContainer = document.createElement('div')
         bgContainer.className = 'absolute inset-0 z-0 flex items-center justify-center bg-gradient-to-br from-[#0d0d18] to-[#15152a]'
 
@@ -108,19 +110,19 @@ function createGameCard(game: Game): HTMLElement {
 
         card.appendChild(bgContainer)
 
-        // Gradient overlay
         const gradient = document.createElement('div')
         gradient.className = 'absolute inset-0 z-[1]'
         gradient.style.background = 'linear-gradient(to right, rgba(10,10,18,0.95) 0%, rgba(10,10,18,0.7) 40%, transparent 100%)'
         card.appendChild(gradient)
     }
 
-    // Content overlay
+    // Content overlay - main layout
     const contentOverlay = document.createElement('div')
-    contentOverlay.className = 'relative z-10 flex items-center min-h-[70vh] px-8 md:px-16 lg:px-24 py-16'
+    contentOverlay.className = 'relative z-10 flex min-h-[70vh] px-8 md:px-16 lg:px-24 py-16'
 
+    // Left side - Game info
     const infoContainer = document.createElement('div')
-    infoContainer.className = 'max-w-xl'
+    infoContainer.className = 'flex-1 flex flex-col justify-center max-w-xl'
 
     // Badges row
     const badgesRow = document.createElement('div')
@@ -220,7 +222,75 @@ function createGameCard(game: Game): HTMLElement {
     }
 
     contentOverlay.appendChild(infoContainer)
+
+    // Right side - Spotify embed (top right)
+    if (game.spotifyAlbums && game.spotifyAlbums.length > 0) {
+        const spotifyContainer = document.createElement('div')
+        spotifyContainer.className = 'hidden lg:flex flex-col items-end ml-auto self-start mt-8'
+
+        // Spotify label
+        const spotifyLabel = document.createElement('div')
+        spotifyLabel.className = 'text-gray-400 text-xs tracking-widest uppercase mb-3'
+        spotifyLabel.textContent = 'Soundtrack'
+        spotifyContainer.appendChild(spotifyLabel)
+
+        // Album selector if multiple albums
+        if (game.spotifyAlbums.length > 1) {
+            const selector = document.createElement('div')
+            selector.className = 'flex gap-2 mb-3'
+
+            const embedContainer = document.createElement('div')
+            embedContainer.className = 'spotify-embed'
+
+            game.spotifyAlbums.forEach((album, index) => {
+                const btn = document.createElement('button')
+                btn.className = `px-3 py-1 text-xs rounded-full transition-all ${index === 0 ? 'bg-green-500 text-black' : 'bg-white/10 text-gray-300 hover:bg-white/20'}`
+                btn.textContent = album.name
+                btn.onclick = () => {
+                    // Update active button
+                    selector.querySelectorAll('button').forEach((b, i) => {
+                        if (i === index) {
+                            b.className = 'px-3 py-1 text-xs rounded-full transition-all bg-green-500 text-black'
+                        } else {
+                            b.className = 'px-3 py-1 text-xs rounded-full transition-all bg-white/10 text-gray-300 hover:bg-white/20'
+                        }
+                    })
+                    // Update embed
+                    embedContainer.innerHTML = createSpotifyEmbed(album.spotifyId)
+                }
+                selector.appendChild(btn)
+            })
+
+            spotifyContainer.appendChild(selector)
+
+            // Initial embed
+            embedContainer.innerHTML = createSpotifyEmbed(game.spotifyAlbums[0].spotifyId)
+            spotifyContainer.appendChild(embedContainer)
+        } else {
+            // Single album
+            const embedContainer = document.createElement('div')
+            embedContainer.innerHTML = createSpotifyEmbed(game.spotifyAlbums[0].spotifyId)
+            spotifyContainer.appendChild(embedContainer)
+        }
+
+        contentOverlay.appendChild(spotifyContainer)
+    }
+
     card.appendChild(contentOverlay)
 
     return card
+}
+
+function createSpotifyEmbed(spotifyId: string): string {
+    return `
+    <iframe
+      style="border-radius: 12px"
+      src="https://open.spotify.com/embed/album/${spotifyId}?utm_source=generator&theme=0"
+      width="500"
+      height="380"
+      frameborder="0"
+      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+      loading="lazy"
+    ></iframe>
+  `
 }

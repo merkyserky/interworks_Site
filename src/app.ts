@@ -7,15 +7,19 @@ import { createHeader, createHero, createGamesSection, createHeroFooter, createP
 import { initCarousel, type CarouselItem } from '@utils/carousel'
 import { onDOMReady } from '@utils/dom'
 
-// Carousel items - logo + matching hero background
+// Carousel items - logo + matching hero background + title/description
 const CAROUSEL_ITEMS: CarouselItem[] = [
     {
         logo: { type: 'text', value: 'INTERWORKS INC' },
-        heroBackground: '/interworks_hero_background.png', // Add this image
+        heroBackground: '/interworks_hero_background.png',
+        title: 'INTERWORKS INC',
+        description: 'idk man add some egg stuff',
     },
     {
         logo: { type: 'image', value: '/studios/astral_Core.png', alt: 'Astral Core' },
-        heroBackground: '/astral_hero_background.png', // Add this image
+        heroBackground: '/astral_hero_background.png',
+        title: 'ASTRAL CORE',
+        description: 'man im astral core ',
     },
 ]
 
@@ -35,28 +39,32 @@ const SITE_CONFIG = {
     },
     games: {
         heading: 'Games',
-        subheading: 'Explore our collection of immersive experiences',
+        subheading: 'Explore our upcoming games',
         list: [
             {
                 id: 'ashmoor-casefiles',
                 name: 'Ashmoor Casefiles',
                 logo: '/ashmoor.png',
-                description: 'Dive into the dark mysteries of Ashmoor. Investigate supernatural cases, uncover hidden secrets, and solve puzzles in this atmospheric detective experience.',
+                description: 'There is no description at this time.',
                 status: 'coming-soon' as const,
                 genre: 'Horror Mystery',
-                platforms: ['Roblox'],
+                // spotifyAlbums: [
+                //     { name: 'OST Vol. 1', spotifyId: 'ALBUM_ID_HERE' },
+                //     { name: 'Ambience', spotifyId: 'ALBUM_ID_HERE' },
+                // ],
             },
             {
                 id: 'unseen-floors',
                 name: 'Unseen Floors',
                 logo: '/LogoUnseen.png',
-                studioLogo: '/studios/astral_Core.png',
-                description: 'doors game unseen floors?',
+                description: 'There is no description at this time.',
                 status: 'coming-soon' as const,
                 genre: 'Horror',
-                platforms: ['Roblox'],
                 youtubeVideoId: '23Mq7j-O88E',
-                link: 'https://www.roblox.com/games/113322775247353/SPOOKY-FLOORS'
+                // link: 'https://www.roblox.com/games/113322775247353/SPOOKY-FLOORS',
+                spotifyAlbums: [
+                    { name: 'OST Vol. 1', spotifyId: '78ZlzFurP42walRtyiRbN8' },
+                ],
             },
         ],
     },
@@ -85,10 +93,10 @@ export function initApp(): void {
         return
     }
 
-    // Initialize carousel (4 seconds per slide)
+    // Initialize carousel (5 seconds per slide)
     initCarousel({
         items: CAROUSEL_ITEMS,
-        interval: 4000,
+        interval: 5000,
     })
 
     // Render Header with synced logo carousel
@@ -98,7 +106,7 @@ export function initApp(): void {
     })
     app.appendChild(header)
 
-    // Render Hero Section with synced background
+    // Render Hero Section with synced background and content
     const hero = createHero({
         carouselItems: CAROUSEL_ITEMS,
         ctaText: SITE_CONFIG.hero.ctaText,
