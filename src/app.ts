@@ -45,7 +45,7 @@ const SITE_CONFIG = {
                 id: 'ashmoor-casefiles',
                 name: 'Ashmoor Casefiles',
                 logo: '/ashmoor.png',
-                description: 'There is no description at this time.',
+                description: 'After the disaster, when humanity fell onto itself, you the traveler came upon the small town of Ashmoor. Discover unsolved cases, encountering friends and foes on your journey, and by your side a handy shotgun which feeds off you blood. The heart is like a rose, like the one that bloomed years ago.',
                 status: 'coming-soon' as const,
                 genre: 'Horror Mystery',
                 // spotifyAlbums: [
