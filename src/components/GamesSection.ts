@@ -14,10 +14,11 @@ export interface Game {
     logo: string
     studioLogo?: string
     description?: string
-    ownedBy?: string          // Owner/studio name (e.g., "Interworks Inc")
+    ownedBy?: string
     link?: string
     youtubeVideoId?: string
-    spotifyAlbums?: readonly SpotifyAlbum[]  // Array of Spotify albums
+    thumbnails?: readonly string[]    // Array of thumbnail images (cycles when paused)
+    spotifyAlbums?: readonly SpotifyAlbum[]
     status?: 'coming-soon' | 'playable' | 'beta' | 'in-development'
     releaseDate?: string
     genre?: string
@@ -29,6 +30,24 @@ export interface GamesSectionConfig {
     subheading?: string
     games: ReadonlyArray<Game>
 }
+
+// Icon helpers
+function getPlayIcon(): string {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`
+}
+
+function getPauseIcon(): string {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
+}
+
+function getVolumeOnIcon(): string {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`
+}
+
+function getVolumeMutedIcon(): string {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>`
+}
+
 
 export function createGamesSection(config: GamesSectionConfig): HTMLElement {
     const { heading, subheading, games } = config
@@ -78,16 +97,22 @@ function createGameCard(game: Game): HTMLElement {
 
     // Video or image background - FULL WIDTH
     if (game.youtubeVideoId) {
+        let isPlaying = true
+        let pauseTimeout: number | null = null
+
+        // Video container
         const videoBg = document.createElement('div')
-        videoBg.className = 'absolute inset-0 z-0'
+        videoBg.className = 'absolute inset-0 z-0 transition-opacity duration-500'
+        videoBg.id = `video-bg-${game.id}`
 
         const videoWrapper = document.createElement('div')
         videoWrapper.className = 'absolute inset-0'
         videoWrapper.style.pointerEvents = 'none'
         videoWrapper.innerHTML = `
       <iframe 
+        id="video-iframe-${game.id}"
         class="absolute top-1/2 left-1/2 w-[200%] h-[200%] -translate-x-1/2 -translate-y-1/2"
-        src="https://www.youtube.com/embed/${game.youtubeVideoId}?autoplay=1&mute=1&loop=1&playlist=${game.youtubeVideoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&disablekb=1&fs=0&iv_load_policy=3"
+        src="https://www.youtube.com/embed/${game.youtubeVideoId}?autoplay=1&mute=1&loop=1&playlist=${game.youtubeVideoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         style="border: 0;"
       ></iframe>
@@ -95,10 +120,136 @@ function createGameCard(game: Game): HTMLElement {
         videoBg.appendChild(videoWrapper)
         card.appendChild(videoBg)
 
+        // Thumbnail container (hidden by default) - supports multiple thumbnails that cycle
+        const thumbnails = game.thumbnails || [game.logo]
+        let currentThumbnailIndex = 0
+        let thumbnailInterval: number | null = null
+
+        const thumbnailBg = document.createElement('div')
+        thumbnailBg.className = 'absolute inset-0 z-0 opacity-0 transition-opacity duration-1000'
+        thumbnailBg.id = `thumbnail-bg-${game.id}`
+        thumbnailBg.style.backgroundImage = `url(${thumbnails[0]})`
+        thumbnailBg.style.backgroundSize = 'cover'
+        thumbnailBg.style.backgroundPosition = 'center'
+        card.appendChild(thumbnailBg)
+
+        // Function to cycle thumbnails
+        const cycleThumbnails = () => {
+            if (thumbnails.length > 1) {
+                thumbnailInterval = window.setInterval(() => {
+                    currentThumbnailIndex = (currentThumbnailIndex + 1) % thumbnails.length
+                    thumbnailBg.style.backgroundImage = `url(${thumbnails[currentThumbnailIndex]})`
+                }, 4000)
+            }
+        }
+
+        const stopThumbnailCycle = () => {
+            if (thumbnailInterval) {
+                clearInterval(thumbnailInterval)
+                thumbnailInterval = null
+            }
+        }
+
+        // Gradient overlay
         const gradient = document.createElement('div')
         gradient.className = 'absolute inset-0 z-[1]'
         gradient.style.background = 'linear-gradient(to right, rgba(10,10,18,0.95) 0%, rgba(10,10,18,0.8) 30%, rgba(10,10,18,0.3) 60%, transparent 100%)'
         card.appendChild(gradient)
+
+        // Video controls container
+        const controlsContainer = document.createElement('div')
+        controlsContainer.className = 'absolute bottom-6 right-6 z-20 flex items-center gap-2'
+
+        // Pause/Play button
+        const playPauseBtn = document.createElement('button')
+        playPauseBtn.className = `
+            w-10 h-10 rounded-full
+            bg-black/70 backdrop-blur-md
+            flex items-center justify-center
+            text-white
+            hover:bg-black/90 hover:scale-110
+            transition-all duration-200
+            border border-white/20
+        `.trim().replace(/\s+/g, ' ')
+        playPauseBtn.innerHTML = getPauseIcon()
+        playPauseBtn.title = 'Pause video'
+
+        playPauseBtn.onclick = () => {
+            const iframe = document.getElementById(`video-iframe-${game.id}`) as HTMLIFrameElement
+
+            if (isPlaying) {
+                if (iframe?.contentWindow) {
+                    iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*')
+                }
+                playPauseBtn.innerHTML = getPlayIcon()
+                playPauseBtn.title = 'Play video'
+                isPlaying = false
+
+                pauseTimeout = window.setTimeout(() => {
+                    videoBg.classList.add('opacity-0')
+                    thumbnailBg.classList.remove('opacity-0')
+                    thumbnailBg.classList.add('opacity-100')
+                    cycleThumbnails()
+                }, 2000)
+            } else {
+                if (pauseTimeout) {
+                    clearTimeout(pauseTimeout)
+                    pauseTimeout = null
+                }
+
+                stopThumbnailCycle()
+                videoBg.classList.remove('opacity-0')
+                thumbnailBg.classList.remove('opacity-100')
+                thumbnailBg.classList.add('opacity-0')
+
+                if (iframe?.contentWindow) {
+                    iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*')
+                }
+                playPauseBtn.innerHTML = getPauseIcon()
+                playPauseBtn.title = 'Pause video'
+                isPlaying = true
+            }
+        }
+
+        controlsContainer.appendChild(playPauseBtn)
+
+        // Volume control - simple mute button (no slider for now since YouTube API is limited)
+        let isMuted = true
+        const muteBtn = document.createElement('button')
+        muteBtn.className = `
+            w-10 h-10 rounded-full
+            bg-black/70 backdrop-blur-md
+            flex items-center justify-center
+            text-white
+            hover:bg-black/90 hover:scale-110
+            transition-all duration-200
+            border border-white/20
+        `.trim().replace(/\s+/g, ' ')
+        muteBtn.innerHTML = getVolumeMutedIcon()
+        muteBtn.title = 'Unmute'
+
+        muteBtn.onclick = () => {
+            const iframe = document.getElementById(`video-iframe-${game.id}`) as HTMLIFrameElement
+
+            if (isMuted) {
+                if (iframe?.contentWindow) {
+                    iframe.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', '*')
+                }
+                muteBtn.innerHTML = getVolumeOnIcon()
+                muteBtn.title = 'Mute'
+                isMuted = false
+            } else {
+                if (iframe?.contentWindow) {
+                    iframe.contentWindow.postMessage('{"event":"command","func":"mute","args":""}', '*')
+                }
+                muteBtn.innerHTML = getVolumeMutedIcon()
+                muteBtn.title = 'Unmute'
+                isMuted = true
+            }
+        }
+
+        controlsContainer.appendChild(muteBtn)
+        card.appendChild(controlsContainer)
     } else {
         const bgContainer = document.createElement('div')
         bgContainer.className = 'absolute inset-0 z-0 flex items-center justify-center bg-gradient-to-br from-[#0d0d18] to-[#15152a]'
@@ -171,7 +322,7 @@ function createGameCard(game: Game): HTMLElement {
     const logoImg = document.createElement('img')
     logoImg.src = game.logo
     logoImg.alt = game.name
-    logoImg.className = 'max-h-[120px] object-contain drop-shadow-2xl'
+    logoImg.className = 'max-h-[300px] object-contain drop-shadow-2xl'
     logoWrapper.appendChild(logoImg)
 
     infoContainer.appendChild(logoWrapper)
@@ -212,20 +363,20 @@ function createGameCard(game: Game): HTMLElement {
         playBtn.target = '_blank'
         playBtn.rel = 'noopener noreferrer'
         playBtn.className = `
-      inline-flex items-center gap-3 px-8 py-4
-      bg-white text-black font-semibold
-      text-sm tracking-widest uppercase
-      rounded-xl
-      hover:bg-indigo-500 hover:text-white hover:scale-105
-      transition-all duration-300
-      shadow-lg shadow-white/10
-    `.trim().replace(/\s+/g, ' ')
+            inline-flex items-center justify-center gap-1.5 px-4 py-2.5
+            bg-white text-black font-semibold
+            text-xs tracking-wide uppercase
+            rounded-lg
+            hover:scale-105 active:scale-95
+            transition-transform duration-200
+            shadow-lg shadow-white/10
+        `.trim().replace(/\s+/g, ' ')
         playBtn.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M8 5v14l11-7z"/>
-      </svg>
-      <span>Play Now</span>
-    `
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z"/>
+            </svg>
+            <span>Play</span>
+        `
         infoContainer.appendChild(playBtn)
     }
 

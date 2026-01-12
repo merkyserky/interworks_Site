@@ -48,7 +48,6 @@ const SITE_CONFIG = {
     },
     navigation: [
         { label: 'Games', href: '#games' },
-        { label: 'Contact', href: '#contact' },
     ],
     hero: {
         ctaText: 'View Games',
@@ -76,9 +75,25 @@ const SITE_CONFIG = {
                 status: 'coming-soon' as const,
                 genre: 'Horror',
                 youtubeVideoId: '23Mq7j-O88E',
+                thumbnails: ['/unseen_Thumbnail.png'], // Add more thumbnails to cycle when paused
                 spotifyAlbums: [
                     { name: 'OST Vol. 1', spotifyId: '78ZlzFurP42walRtyiRbN8' },
                 ],
+            },
+            {
+                id: 'gub-ball',
+                name: 'Gub Ball',
+                logo: '/LogoGub.png',
+                description: '"Retro-Slop" themed dodgeball game made for Jandels Gamejam 2025.',
+                ownedBy: 'Gub Studs',
+                status: 'playable' as const,
+                genre: 'Retro-Slop',
+                youtubeVideoId: 'KLLQ8J_bvcY',
+                thumbnails: ['/gub_Thumbnail.png'], // Add more thumbnails to cycle when paused
+                spotifyAlbums: [
+                    { name: 'Official OST', spotifyId: '6hT5mLIhXmNzDRwUi5TS9B' },
+                ],
+                link: 'https://www.roblox.com/games/107401395098231/GUB-BALL',
             },
         ],
     },
@@ -143,7 +158,7 @@ export function initApp(): void {
     })
     app.appendChild(pageFooter)
 
-    console.log('🚀 ASTRAL CORE + INTERWORKS INC - App initialized')
+    console.log("ASTRAL CORE + INTERWORKS INC - Site Loaded")
 }
 
 // Auto-initialize when DOM is ready
