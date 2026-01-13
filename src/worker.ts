@@ -478,18 +478,21 @@ export default {
                 }
                 const studioMatch = pathname.match(/^\/api\/studios\/([^/]+)$/);
                 if (studioMatch && request.method === 'PUT') {
-                    if (currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
                     let studios = await env.GAMES_DATABASE.get('studios', 'json') as Studio[] | null || [...DEFAULT_STUDIOS];
                     const idx = studios.findIndex(s => s.id === studioMatch[1]);
                     if (idx === -1) return jsonResponse({ error: 'Not found' }, 404);
+
+                    // Permission check
+                    if (!hasStudioPermission(currentUser, studios[idx].name)) return jsonResponse({ error: 'Forbidden' }, 403);
 
                     const updated = await request.json() as Partial<Studio>;
                     const oldName = studios[idx].name;
                     studios[idx] = { ...studios[idx], ...updated, id: studioMatch[1] };
                     await env.GAMES_DATABASE.put('studios', JSON.stringify(studios));
 
-                    // Cascade name change to games if name changed
+                    // Cascade name change to games and users if name changed
                     if (updated.name && updated.name !== oldName) {
+                        // Update Games
                         let games = (await env.GAMES_DATABASE.get('games', 'json') as any[] || DEFAULT_GAMES).map(migrateGame);
                         let gamesChanged = false;
                         games = games.map(g => {
@@ -501,6 +504,25 @@ export default {
                         });
                         if (gamesChanged) {
                             await env.GAMES_DATABASE.put('games', JSON.stringify(games));
+                        }
+
+                        // Update Users permissions
+                        let users = await env.GAMES_DATABASE.get('users', 'json') as User[] | null;
+                        if (users) {
+                            let usersChanged = false;
+                            users = users.map(u => {
+                                if (u.allowedStudios && u.allowedStudios.includes(oldName)) {
+                                    usersChanged = true;
+                                    return {
+                                        ...u,
+                                        allowedStudios: u.allowedStudios.map(s => s === oldName ? updated.name! : s)
+                                    };
+                                }
+                                return u;
+                            });
+                            if (usersChanged) {
+                                await env.GAMES_DATABASE.put('users', JSON.stringify(users));
+                            }
                         }
                     }
 

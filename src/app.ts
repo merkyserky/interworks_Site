@@ -192,43 +192,97 @@ function createNotificationModal(): HTMLElement {
     return modal
 }
 
+// Custom studio icons
+function getStudioIcon(index: number): string {
+    const icons = [
+        // Gamepad icon
+        `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="2"/></svg>`,
+        // Music icon
+        `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`,
+        // Film icon
+        `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>`,
+        // Code icon
+        `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16,18 22,12 16,6"/><polyline points="8,6 2,12 8,18"/></svg>`,
+        // Palette icon
+        `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="0.5" fill="currentColor"/><circle cx="17.5" cy="10.5" r="0.5" fill="currentColor"/><circle cx="8.5" cy="7.5" r="0.5" fill="currentColor"/><circle cx="6.5" cy="12.5" r="0.5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c0.926 0 1.648-0.746 1.648-1.688 0-0.437-0.18-0.835-0.437-1.125-0.29-0.289-0.438-0.652-0.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z"/></svg>`,
+        // Rocket icon
+        `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>`,
+        // Star icon
+        `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+        // Zap icon
+        `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`
+    ]
+    return icons[index % icons.length]
+}
+
+function getStudioGradient(index: number): string {
+    const gradients = [
+        'from-violet-500 to-purple-600',
+        'from-pink-500 to-rose-600',
+        'from-blue-500 to-cyan-600',
+        'from-emerald-500 to-teal-600',
+        'from-amber-500 to-orange-600',
+        'from-red-500 to-pink-600',
+        'from-indigo-500 to-blue-600',
+        'from-fuchsia-500 to-purple-600'
+    ]
+    return gradients[index % gradients.length]
+}
+
 // STUDIOS MODAL
 function createStudiosModal(): HTMLElement {
     const modal = document.createElement('div')
     modal.id = 'studios-modal'
     modal.className = 'fixed inset-0 z-[100] hidden flex items-center justify-center p-4'
-    // Modified content: Center-aligned list of studios
-    const studiosList = studios.map(s => `
-        <div class="group bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-4 transition-all hover:scale-[1.02] cursor-pointer" onclick="window.openSocials('${s.name}')">
-            <div class="w-16 h-16 rounded-lg bg-black/40 mb-3 overflow-hidden flex items-center justify-center mx-auto shadow-lg">
+    // Modified content: Center-aligned list of studios with thicker fonts and custom icons
+    const studiosList = studios.map((s, index) => `
+        <div class="group bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-2xl p-5 transition-all duration-300 hover:scale-[1.03] hover:shadow-xl hover:shadow-violet-500/10 cursor-pointer" onclick="window.openSocials('${s.name}')">
+            <div class="w-18 h-18 rounded-xl bg-gradient-to-br ${getStudioGradient(index)} mb-4 overflow-hidden flex items-center justify-center mx-auto shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300">
                 ${s.logo
             ? `<img src="${s.logo}" class="w-full h-full object-cover">`
-            : `<span class="text-2xl font-bold text-gray-400 select-none">${s.name.charAt(0)}</span>`
+            : `<span class="text-white">${getStudioIcon(index)}</span>`
         }
             </div>
-            <h3 class="text-white font-semibold text-center truncate px-2">${s.name}</h3>
-            ${s.description ? `<p class="text-xs text-gray-400 text-center mt-1 line-clamp-2 px-2">${s.description}</p>` : ''}
+            <h3 class="text-white font-extrabold text-base text-center truncate px-1 group-hover:text-violet-300 transition-colors">${s.name}</h3>
+            ${s.description ? `<p class="text-xs text-gray-500 text-center mt-2 line-clamp-2 px-1 font-medium">${s.description}</p>` : ''}
+            <div class="mt-3 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                ${s.discord ? '<div class="w-6 h-6 rounded-full bg-[#5865F2]/20 flex items-center justify-center"><svg class="w-3.5 h-3.5 text-[#5865F2]" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037 13.486 13.486 0 00-.594 1.226c-2.176-.328-4.352-.328-6.505 0a13.482 13.482 0 00-.602-1.226.075.075 0 00-.079-.037A19.736 19.736 0 002.66 4.37a.072.072 0 00-.03.047C.612 10.976 1.765 17.58 4.295 21.054a.077.077 0 00.088.026 19.988 19.988 0 006.014-3.03.076.076 0 00.038-.052 14.167 14.167 0 01-2.261-1.077.073.073 0 01.002-.122 10.02 10.02 0 00.916-.445.075.075 0 01.078.006 14.28 14.28 0 004.977 1.018 14.285 14.285 0 004.982-1.018.075.075 0 01.078-.006 10.063 10.063 0 00.911.445.074.074 0 01.003.122 14.074 14.074 0 01-2.266 1.077.075.075 0 00.037.052 19.967 19.967 0 006.02 3.03.078.078 0 00.087-.026c2.617-3.593 3.738-10.292 1.638-16.637a.072.072 0 00-.03-.047z"/></svg></div>' : ''}
+                ${s.youtube ? '<div class="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center"><svg class="w-3.5 h-3.5 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg></div>' : ''}
+                ${s.roblox ? '<div class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center"><svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M5.164 0L0 18.627 18.836 24 24 5.373 5.164 0zm7.998 14.305l-4.26-1.132 1.133-4.263 4.261 1.132-1.134 4.263z"/></svg></div>' : ''}
+            </div>
         </div>
     `).join('')
 
     modal.innerHTML = `
-        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="window.closeStudiosModal()"></div>
-        <div class="relative w-full max-w-4xl bg-[#121212] rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-fade-in-up">
-            <div class="px-8 py-6 border-b border-white/10 flex items-center justify-between bg-white/5">
+        <div class="absolute inset-0 bg-black/85 backdrop-blur-lg" onclick="window.closeStudiosModal()"></div>
+        <div class="relative w-full max-w-5xl bg-[#0f0f0f] rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-fade-in-up">
+            <div class="px-8 py-6 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-violet-500/10 to-purple-500/10">
                 <div>
-                    <h2 class="text-2xl font-bold text-white tracking-tight">Studios</h2>
-                    <p class="text-gray-400 text-sm">Our creative teams</p>
+                    <h2 class="text-3xl font-black text-white tracking-tight">Our Studios</h2>
+                    <p class="text-gray-400 text-sm font-medium mt-1">Explore the creative teams behind our games</p>
                 </div>
-                <button onclick="window.closeStudiosModal()" class="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors">
+                <button onclick="window.closeStudiosModal()" class="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all hover:rotate-90 duration-300">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            <div class="p-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                ${studiosList.length ? studiosList : '<p class="text-gray-500 text-center col-span-full py-12">No studios found</p>'}
+            <div class="p-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                ${studiosList.length ? studiosList : '<p class="text-gray-500 text-center col-span-full py-12 font-semibold">No studios found</p>'}
             </div>
         </div>
     `
     return modal
+}
+
+// Status badge helper function
+function getStatusBadge(status: string): string {
+    const statusMap: Record<string, { color: string; text: string }> = {
+        'playable': { color: 'bg-green-500/90 text-black', text: 'PLAYABLE' },
+        'coming-soon': { color: 'bg-yellow-500/90 text-black', text: 'COMING SOON' },
+        'beta': { color: 'bg-blue-500/90 text-white', text: 'BETA' },
+        'in-development': { color: 'bg-purple-500/90 text-white', text: 'IN DEV' }
+    }
+    const s = statusMap[status] || { color: 'bg-white/20 text-white', text: status.toUpperCase() }
+    return `<span class="px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest ${s.color} shadow-lg backdrop-blur-sm">${s.text}</span>`
 }
 
 // GAMES MODAL (Replaces scroll-to-games usage)
@@ -243,11 +297,9 @@ function createGamesModal(): HTMLElement {
         .filter(g => g.visible !== false)
         .sort((a, b) => (a.order || 0) - (b.order || 0))
 
-    // Re-use existing game card logic from components but wrap nicely for modal
-    // Actually we can reconstruct a simple card here or re-use createGamesSection logic partially?
-    // Let's create specific modal cards for consistency.
+    // Create specific modal cards for consistency with badge on top-right of image
     const gamesList = visibleGames.map(g => `
-        <div class="relative group bg-[#1e1e1e] border border-white/10 rounded-2xl overflow-hidden hover:border-violet-500/50 transition-all hover:shadow-2xl hover:shadow-violet-900/20">
+        <div class="relative group bg-[#161616] border border-white/10 rounded-2xl overflow-hidden hover:border-violet-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-violet-900/20 hover:-translate-y-1">
              <div class="aspect-video relative overflow-hidden bg-black/50">
                  ${g.thumbnails && g.thumbnails.length > 0
             ? `<img src="${g.thumbnails[0]}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">`
@@ -255,50 +307,47 @@ function createGamesModal(): HTMLElement {
                 ? `<img src="${g.logo}" class="w-full h-full object-cover blur-sm opacity-50"><img src="${g.logo}" class="absolute inset-0 w-2/3 h-2/3 m-auto object-contain z-10">`
                 : `<div class="w-full h-full flex items-center justify-center text-gray-600">No Image</div>`
         }
-                 <div class="absolute inset-0 bg-gradient-to-t from-[#1e1e1e] to-transparent opacity-60"></div>
-                 <div class="absolute top-2 right-2 flex gap-1">
-                    ${g.status ? `<span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider bg-white/10 backdrop-blur text-white border border-white/10">${g.status}</span>` : ''}
-                 </div>
+                 <div class="absolute inset-0 bg-gradient-to-t from-[#161616] via-transparent to-transparent opacity-80"></div>
+                 <!-- Status Badge - Top Right Corner of Image -->
+                 ${g.status ? `<div class="absolute top-3 right-3">${getStatusBadge(g.status)}</div>` : ''}
              </div>
              <div class="p-5">
                   <div class="flex items-center gap-3 mb-3">
-                    ${g.logo ? `<img src="${g.logo}" class="w-10 h-10 rounded-lg object-contain bg-black/30 p-1 border border-white/5">` : ''}
-                    <div>
-                        <h3 class="text-lg font-bold text-white leading-none group-hover:text-violet-400 transition-colors">${g.name}</h3>
+                    ${g.logo ? `<img src="${g.logo}" class="w-10 h-10 rounded-lg object-contain bg-black/50 p-1.5 border border-white/10 shadow-lg">` : ''}
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-base font-extrabold text-white leading-tight group-hover:text-violet-400 transition-colors truncate">${g.name}</h3>
                         ${(() => {
             const studio = studios.find(s => s.name === g.ownedBy);
             return studio?.discord
-                ? `<a href="${studio.discord}" target="_blank" class="text-xs text-gray-500 mt-1 uppercase tracking-widest font-semibold hover:text-violet-400 transition-colors flex items-center gap-1">OWNED BY: ${g.ownedBy} <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037 13.486 13.486 0 00-.594 1.226c-2.176-.328-4.352-.328-6.505 0a13.482 13.482 0 00-.602-1.226.075.075 0 00-.079-.037A19.736 19.736 0 002.66 4.37a.072.072 0 00-.03.047C.612 10.976 1.765 17.58 4.295 21.054a.077.077 0 00.088.026 19.988 19.988 0 006.014-3.03.076.076 0 00.038-.052 14.167 14.167 0 01-2.261-1.077.073.073 0 01.002-.122 10.02 10.02 0 00.916-.445.075.075 0 01.078.006 14.28 14.28 0 004.977 1.018 14.285 14.285 0 004.982-1.018.075.075 0 01.078-.006 10.063 10.063 0 00.911.445.074.074 0 01.003.122 14.074 14.074 0 01-2.266 1.077.075.075 0 00.037.052 19.967 19.967 0 006.02 3.03.078.078 0 00.087-.026c2.617-3.593 3.738-10.292 1.638-16.637a.072.072 0 00-.03-.047zM8.534 14.896c-1.12 0-2.036-1.03-2.036-2.296 0-1.266.896-2.296 2.036-2.296 1.137 0 2.053 1.03 2.053 2.296 0 1.266-.897 2.296-2.053 2.296zm6.983 0c-1.12 0-2.036-1.03-2.036-2.296 0-1.266.896-2.296 2.036-2.296 1.137 0 2.053 1.03 2.053 2.296 0 1.266-.897 2.296-2.053 2.296z"/></svg></a>`
-                : `<p class="text-xs text-gray-500 mt-1 uppercase tracking-widest font-semibold">OWNED BY: ${g.ownedBy}</p>`
+                ? `<a href="${studio.discord}" target="_blank" class="text-[10px] text-gray-500 uppercase tracking-widest font-bold hover:text-violet-400 transition-colors flex items-center gap-1 mt-0.5">BY: ${g.ownedBy} <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037 13.486 13.486 0 00-.594 1.226c-2.176-.328-4.352-.328-6.505 0a13.482 13.482 0 00-.602-1.226.075.075 0 00-.079-.037A19.736 19.736 0 002.66 4.37a.072.072 0 00-.03.047C.612 10.976 1.765 17.58 4.295 21.054a.077.077 0 00.088.026 19.988 19.988 0 006.014-3.03.076.076 0 00.038-.052 14.167 14.167 0 01-2.261-1.077.073.073 0 01.002-.122 10.02 10.02 0 00.916-.445.075.075 0 01.078.006 14.28 14.28 0 004.977 1.018 14.285 14.285 0 004.982-1.018.075.075 0 01.078-.006 10.063 10.063 0 00.911.445.074.074 0 01.003.122 14.074 14.074 0 01-2.266 1.077.075.075 0 00.037.052 19.967 19.967 0 006.02 3.03.078.078 0 00.087-.026c2.617-3.593 3.738-10.292 1.638-16.637a.072.072 0 00-.03-.047z"/></svg></a>`
+                : `<p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-0.5">BY: ${g.ownedBy}</p>`
         })()}
                     </div>
                  </div>
-                 <p class="text-sm text-gray-400 line-clamp-3 mb-4 h-15">${g.description}</p>
-                 <div class="flex flex-wrap gap-2 mb-4">
-                     ${g.genres.slice(0, 3).map(gen => `<span class="text-[10px] px-2 py-1 bg-white/5 rounded text-gray-300 border border-white/5">${gen}</span>`).join('')}
+                 <p class="text-sm text-gray-400 line-clamp-2 mb-4 leading-relaxed">${g.description}</p>
+                 <div class="flex flex-wrap gap-1.5 mb-4">
+                     ${g.genres.slice(0, 3).map(gen => `<span class="text-[10px] px-2 py-1 bg-white/5 rounded-md text-gray-400 border border-white/5 font-medium">${gen}</span>`).join('')}
                  </div>
-                 <!-- Note: Game Links could be added here similar to index page, but let's keep it clean or add a 'View Details' if we had a detail page. 
-                      For now, if there is a 'link', maybe a Play button? -->
-                 ${g.link ? `<a href="${g.link}" target="_blank" class="block w-full text-center py-2 bg-white/5 hover:bg-violet-600 text-gray-300 hover:text-white rounded-lg transition-colors text-sm font-semibold border border-white/5 hover:border-violet-500">Play Now</a>` : ''}
+                 ${g.link ? `<a href="${g.link}" target="_blank" class="block w-full text-center py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-xl transition-all text-sm font-bold shadow-lg shadow-violet-900/30 hover:shadow-violet-900/50 hover:scale-[1.02]">Play Now</a>` : ''}
              </div>
         </div>
     `).join('')
 
     modal.innerHTML = `
-        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="window.closeGamesModal()"></div>
-        <div class="relative w-full max-w-6xl h-[85vh] bg-[#121212] rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-fade-in-up">
-             <div class="px-8 py-6 border-b border-white/10 flex items-center justify-between bg-white/5 shrink-0">
+        <div class="absolute inset-0 bg-black/85 backdrop-blur-lg" onclick="window.closeGamesModal()"></div>
+        <div class="relative w-full max-w-6xl h-[85vh] bg-[#0f0f0f] rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-fade-in-up">
+             <div class="px-8 py-6 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-violet-500/10 to-purple-500/10 shrink-0">
                 <div>
-                    <h2 class="text-2xl font-bold text-white tracking-tight">All Games</h2>
-                    <p class="text-gray-400 text-sm">Explore our universe</p>
+                    <h2 class="text-3xl font-black text-white tracking-tight">All Games</h2>
+                    <p class="text-gray-400 text-sm font-medium mt-1">Explore our collection of games</p>
                 </div>
-                <button onclick="window.closeGamesModal()" class="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors">
+                <button onclick="window.closeGamesModal()" class="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all hover:rotate-90 duration-300">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             <div class="p-8 overflow-y-auto custom-scrollbar flex-1">
                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    ${gamesList.length ? gamesList : '<p class="text-gray-500 text-center col-span-full py-12">No games visible currently.</p>'}
+                    ${gamesList.length ? gamesList : '<p class="text-gray-500 text-center col-span-full py-12 font-semibold">No games visible currently.</p>'}
                  </div>
             </div>
         </div>

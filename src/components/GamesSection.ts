@@ -72,7 +72,7 @@ export function createGamesSection(config: GamesSectionConfig): HTMLElement {
 
     const sub = document.createElement('p')
     sub.className = 'text-gray-500 text-center tracking-wide'
-    sub.textContent = subheading || 'Explore our collection of immersive experiences'
+    sub.textContent = subheading || 'Explore our collection of games'
     headerContainer.appendChild(sub)
 
     content.appendChild(headerContainer)
