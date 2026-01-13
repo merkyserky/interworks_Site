@@ -41,8 +41,6 @@ export default function App() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [currentView, setCurrentView] = useState('games');
     const [games, setGames] = useState<Game[]>([]);
-    const [studios, setStudios] = useState<Studio[]>([]);
-    const [users, setUsers] = useState<User[]>([]);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -52,15 +50,13 @@ export default function App() {
 
     const fetchData = async () => {
         try {
-            const [gamesData, studiosData, usersData, userData] = await Promise.all([
+            const [gamesData, , , userData] = await Promise.all([
                 api.get<Game[]>('/api/games'),
                 api.get<Studio[]>('/api/studios'),
                 api.get<User[]>('/api/users'), // Make sure this endpoint exists or handle error
                 api.get<User>('/api/me').catch(() => null) // Handle unauth potentially
             ]);
             setGames(gamesData);
-            setStudios(studiosData);
-            setUsers(usersData);
             setCurrentUser(userData);
         } catch (e) {
             console.error("Failed to fetch data", e);
