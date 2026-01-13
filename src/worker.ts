@@ -49,6 +49,13 @@ interface Studio {
     youtube?: string;
 }
 
+interface User {
+    username: string;
+    password?: string; // For internal storage, not API response
+    role: 'admin' | 'user';
+    allowedStudios: string[]; // List of studio names or IDs, or ['*'] for all
+}
+
 // Default data
 const DEFAULT_STUDIOS: Studio[] = [
     { id: 'interworks', name: 'Interworks Inc', discord: 'https://discord.gg/C2wGG8KHRr', roblox: 'https://www.roblox.com/communities/34862200/Interworks-Inc#!/' },
@@ -93,6 +100,11 @@ const DEFAULT_GAMES: Game[] = [
     },
 ];
 
+const DEFAULT_USERS: User[] = [
+    { username: 'plasmix2', role: 'admin', allowedStudios: ['*'] },
+    { username: 'waffly', role: 'admin', allowedStudios: ['*'] }
+];
+
 const MEDIA_FILES = [
     '/ashmoor.png', '/LogoUnseen.png', '/LogoGub.png', '/unseen_Thumbnail.png',
     '/gub_Thumbnail.png', '/astral_hero_background.png', '/interworks_hero_background.png',
@@ -100,7 +112,7 @@ const MEDIA_FILES = [
 ];
 
 // Session storage
-const sessions = new Map<string, { username: string; expires: number }>();
+const sessions = new Map<string, { username: string; expires: number; role: string; allowedStudios: string[] }>();
 
 function generateSessionToken(): string {
     const array = new Uint8Array(32);
@@ -121,6 +133,11 @@ function getSessionToken(request: Request): string | null {
     if (!cookie) return null;
     const match = cookie.match(/panel_session=([^;]+)/);
     return match ? match[1] : null;
+}
+
+function getSessionUser(request: Request) {
+    const token = getSessionToken(request);
+    return token ? sessions.get(token) : null;
 }
 
 function corsHeaders(): HeadersInit {
@@ -184,6 +201,13 @@ function migrateGame(game: any): Game {
     return game as Game;
 }
 
+// Helper to check user permission for a studio
+function hasStudioPermission(user: { role: string; allowedStudios: string[] }, studioName: string): boolean {
+    if (user.role === 'admin') return true;
+    if (user.allowedStudios.includes('*')) return true;
+    return user.allowedStudios.includes(studioName);
+}
+
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
         const url = new URL(request.url);
@@ -195,16 +219,42 @@ export default {
         if (isPanelSubdomain) {
             const pathname = url.pathname;
             const sessionToken = getSessionToken(request);
+            const currentUser = sessionToken ? sessions.get(sessionToken) : null;
 
             // Login
             if (pathname === '/api/login' && request.method === 'POST') {
                 const formData = await request.formData();
                 const username = formData.get('username')?.toString() || '';
                 const password = formData.get('password')?.toString() || '';
-                const storedPassword = await env.PANEL_AUTH.get(`user:${username}`);
-                if (storedPassword && storedPassword === password) {
+
+                // Check against users DB first
+                let users = await env.GAMES_DATABASE.get('users', 'json') as User[] | null;
+                if (!users) {
+                    // Init default users if DB is empty
+                    await env.GAMES_DATABASE.put('users', JSON.stringify(DEFAULT_USERS));
+                    users = DEFAULT_USERS;
+                }
+
+                const user = users.find(u => u.username === username);
+
+                // Auth logic: Try DB user password if exists, else fallback to KV 'user:X' for legacy passwords
+                let authenticated = false;
+                if (user && user.password) {
+                    if (user.password === password) authenticated = true;
+                } else {
+                    // Fallback/Legacy: Check PANEL_AUTH or separate KV for password
+                    // For initial super admins, they might rely on legacy pass, or they need to set it up.
+                    // Assuming 'user:username' still holds the password for now.
+                    const storedPassword = await env.PANEL_AUTH.get(`user:${username}`);
+                    if (storedPassword && storedPassword === password) authenticated = true;
+                }
+
+                if (authenticated) {
                     const token = generateSessionToken();
-                    sessions.set(token, { username, expires: Date.now() + 86400000 });
+                    // Store minimal user info in session
+                    const role = (user?.role) || 'user'; // Default to user if not in DB (shouldn't happen if we seed)
+                    const allowedStudios = (user?.allowedStudios) || [];
+                    sessions.set(token, { username, expires: Date.now() + 86400000, role, allowedStudios });
                     return new Response(null, { status: 302, headers: { 'Location': '/', 'Set-Cookie': `panel_session=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=86400` } });
                 }
                 return new Response(getLoginPageHTML('Invalid credentials'), { status: 401, headers: { 'Content-Type': 'text/html' } });
@@ -221,7 +271,56 @@ export default {
 
             // API routes (require auth)
             if (pathname.startsWith('/api/')) {
-                if (!isValidSession(sessionToken)) return jsonResponse({ error: 'Unauthorized' }, 401);
+                if (!isValidSession(sessionToken) || !currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+                // Session/User Info
+                if (pathname === '/api/me' && request.method === 'GET') {
+                    return jsonResponse({
+                        username: currentUser.username,
+                        role: currentUser.role,
+                        allowedStudios: currentUser.allowedStudios
+                    });
+                }
+
+                // Users Management (Admin only)
+                if (pathname.startsWith('/api/users')) {
+                    if (currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
+
+                    if (pathname === '/api/users' && request.method === 'GET') {
+                        let users = await env.GAMES_DATABASE.get('users', 'json') as User[] | null;
+                        if (!users) users = DEFAULT_USERS;
+                        // Don't return passwords
+                        return jsonResponse(users.map(u => ({ ...u, password: undefined })));
+                    }
+                    if (pathname === '/api/users' && request.method === 'POST') {
+                        let users = await env.GAMES_DATABASE.get('users', 'json') as User[] | null || [...DEFAULT_USERS];
+                        const newUser = await request.json() as User;
+                        if (users.find(u => u.username === newUser.username)) return jsonResponse({ error: 'User already exists' }, 400);
+                        users.push(newUser);
+                        await env.GAMES_DATABASE.put('users', JSON.stringify(users));
+                        // Also set password in legacy KV for compatibility if needed, but primarily use DB
+                        // Actually, let's just stick to the JSON DB for new users.
+                        return jsonResponse({ ...newUser, password: undefined }, 201);
+                    }
+                    const userMatch = pathname.match(/^\/api\/users\/([^/]+)$/);
+                    if (userMatch && request.method === 'PUT') {
+                        let users = await env.GAMES_DATABASE.get('users', 'json') as User[] | null || [...DEFAULT_USERS];
+                        const idx = users.findIndex(u => u.username === userMatch[1]);
+                        if (idx === -1) return jsonResponse({ error: 'Not found' }, 404);
+                        const updates = await request.json() as Partial<User>;
+                        // Don't allow changing username easily as it's the ID
+                        users[idx] = { ...users[idx], ...updates, username: userMatch[1] };
+                        await env.GAMES_DATABASE.put('users', JSON.stringify(users));
+                        return jsonResponse({ ...users[idx], password: undefined });
+                    }
+                    if (userMatch && request.method === 'DELETE') {
+                        if (userMatch[1] === currentUser.username) return jsonResponse({ error: 'Cannot delete yourself' }, 400);
+                        let users = await env.GAMES_DATABASE.get('users', 'json') as User[] | null || [...DEFAULT_USERS];
+                        users = users.filter(u => u.username !== userMatch[1]);
+                        await env.GAMES_DATABASE.put('users', JSON.stringify(users));
+                        return jsonResponse({ success: true });
+                    }
+                }
 
                 // Games CRUD
                 if (pathname === '/api/games' && request.method === 'GET') {
@@ -240,7 +339,12 @@ export default {
                     let games = (await env.GAMES_DATABASE.get('games', 'json') as any[] || [...DEFAULT_GAMES]).map(migrateGame);
                     const idx = games.findIndex(g => g.id === gameMatch[1]);
                     if (idx === -1) return jsonResponse({ error: 'Not found' }, 404);
+
+                    // Permission check
+                    if (!hasStudioPermission(currentUser, games[idx].ownedBy)) return jsonResponse({ error: 'Forbidden' }, 403);
                     const updated = await request.json() as Partial<Game>;
+                    if (updated.ownedBy && !hasStudioPermission(currentUser, updated.ownedBy)) return jsonResponse({ error: 'Forbidden: Cannot transfer to studio you do not own' }, 403);
+
                     games[idx] = { ...games[idx], ...updated, id: gameMatch[1] };
                     await env.GAMES_DATABASE.put('games', JSON.stringify(games));
                     return jsonResponse(games[idx]);
@@ -248,6 +352,10 @@ export default {
                 if (pathname === '/api/games' && request.method === 'POST') {
                     let games = (await env.GAMES_DATABASE.get('games', 'json') as any[] || [...DEFAULT_GAMES]).map(migrateGame);
                     const newGame = await request.json() as Game;
+
+                    // Permission check
+                    if (!hasStudioPermission(currentUser, newGame.ownedBy)) return jsonResponse({ error: 'Forbidden' }, 403);
+
                     newGame.id = newGame.id || `game-${Date.now()}`;
                     games.push(newGame);
                     await env.GAMES_DATABASE.put('games', JSON.stringify(games));
@@ -255,6 +363,11 @@ export default {
                 }
                 if (gameMatch && request.method === 'DELETE') {
                     let games = (await env.GAMES_DATABASE.get('games', 'json') as any[] || [...DEFAULT_GAMES]).map(migrateGame);
+
+                    // Permission check
+                    const game = games.find(g => g.id === gameMatch[1]);
+                    if (game && !hasStudioPermission(currentUser, game.ownedBy)) return jsonResponse({ error: 'Forbidden' }, 403);
+
                     games = games.filter(g => g.id !== gameMatch[1]);
                     await env.GAMES_DATABASE.put('games', JSON.stringify(games));
                     return jsonResponse({ success: true });
@@ -269,6 +382,12 @@ export default {
                 if (pathname === '/api/announcements' && request.method === 'POST') {
                     let notifications = await env.GAMES_DATABASE.get('notifications', 'json') as Notification[] | null || [];
                     const newNotif = await request.json() as Notification;
+
+                    // Permission check: Need to find the game to check studio
+                    let games = (await env.GAMES_DATABASE.get('games', 'json') as any[] || DEFAULT_GAMES).map(migrateGame);
+                    const game = games.find(g => g.id === newNotif.gameId);
+                    if (game && !hasStudioPermission(currentUser, game.ownedBy)) return jsonResponse({ error: 'Forbidden' }, 403);
+
                     newNotif.id = newNotif.id || `notif-${Date.now()}`;
                     notifications.push(newNotif);
                     await env.GAMES_DATABASE.put('notifications', JSON.stringify(notifications));
@@ -279,13 +398,34 @@ export default {
                     let notifications = await env.GAMES_DATABASE.get('notifications', 'json') as Notification[] | null || [];
                     const idx = notifications.findIndex(n => n.id === notifMatch[1]);
                     if (idx === -1) return jsonResponse({ error: 'Not found' }, 404);
+
+                    // Permission check
+                    let games = (await env.GAMES_DATABASE.get('games', 'json') as any[] || DEFAULT_GAMES).map(migrateGame);
+                    const game = games.find(g => g.id === notifications[idx].gameId);
+                    if (game && !hasStudioPermission(currentUser, game.ownedBy)) return jsonResponse({ error: 'Forbidden' }, 403);
+
                     const updated = await request.json() as Partial<Notification>;
+                    // If changing game, check new game permission too
+                    if (updated.gameId) {
+                        const newGame = games.find(g => g.id === updated.gameId);
+                        if (newGame && !hasStudioPermission(currentUser, newGame.ownedBy)) return jsonResponse({ error: 'Forbidden' }, 403);
+                    }
+
                     notifications[idx] = { ...notifications[idx], ...updated, id: notifMatch[1] };
                     await env.GAMES_DATABASE.put('notifications', JSON.stringify(notifications));
                     return jsonResponse(notifications[idx]);
                 }
                 if (notifMatch && request.method === 'DELETE') {
                     let notifications = await env.GAMES_DATABASE.get('notifications', 'json') as Notification[] | null || [];
+
+                    // Permission check
+                    let games = (await env.GAMES_DATABASE.get('games', 'json') as any[] || DEFAULT_GAMES).map(migrateGame);
+                    const idx = notifications.findIndex(n => n.id === notifMatch[1]);
+                    if (idx !== -1) {
+                        const game = games.find(g => g.id === notifications[idx].gameId);
+                        if (game && !hasStudioPermission(currentUser, game.ownedBy)) return jsonResponse({ error: 'Forbidden' }, 403);
+                    }
+
                     notifications = notifications.filter(n => n.id !== notifMatch[1]);
                     await env.GAMES_DATABASE.put('notifications', JSON.stringify(notifications));
                     return jsonResponse({ success: true });
