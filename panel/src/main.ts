@@ -7,6 +7,25 @@ interface Game { id: string; name: string; logo: string; description: string; ow
 interface Studio { id: string; name: string; description?: string; logo?: string; thumbnail?: string; hero?: boolean; media?: string[]; discord?: string; roblox?: string; youtube?: string; }
 interface User { username: string; role: 'admin' | 'user'; allowedStudios: string[]; password?: string; } // Password optional in frontend type
 
+
+// Theme
+function getTheme(): 'light' | 'dark' {
+  const cookie = document.cookie.split('; ').find(row => row.startsWith('theme='));
+  return (cookie ? cookie.split('=')[1] : 'light') as 'light' | 'dark';
+}
+function toggleTheme() {
+  const current = getTheme();
+  const next = current === 'light' ? 'dark' : 'light';
+  document.cookie = `theme=${next}; path=/; max-age=31536000`; // 1 year
+  applyTheme();
+  render(); // Re-render to update icon if needed, though icon is in header which is static mostly but we re-render header now
+}
+function applyTheme() {
+  const theme = getTheme();
+  if (theme === 'dark') document.documentElement.classList.add('dark');
+  else document.documentElement.classList.remove('dark');
+}
+
 // State
 let games: Game[] = [];
 let studios: Studio[] = [];
@@ -21,6 +40,10 @@ let editingNotification: GameNotif | null = null;
 let editingUser: User | null = null;
 let editingStudio: Studio | null = null;
 let mediaPickerTarget: string | null = null;
+let isDark = getTheme() === 'dark'; // Simplify access for render
+
+// Apply immediately
+applyTheme();
 
 // API with error handling
 const api = {
@@ -69,22 +92,22 @@ const hasPermission = (studioName: string) => {
 function GameCard(game: Game): string {
   const canEdit = hasPermission(game.ownedBy);
   return `
-	<div class="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all group">
-		<div class="aspect-video bg-gray-100 relative">
+	<div class="bg-white dark:bg-[#1a1a1a] dark:border-gray-700 rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all group">
+		<div class="aspect-video bg-gray-100 dark:bg-gray-800 relative">
 			<img src="${game.logo}" alt="${game.name}" class="w-full h-full object-cover" onerror="this.style.display='none'">
 			<div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2">
 				${canEdit ? `
-				<button onclick="editGame('${game.id}')" class="opacity-0 group-hover:opacity-100 bg-white rounded-full p-3 shadow-lg hover:bg-gray-50"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
+				<button onclick="editGame('${game.id}')" class="opacity-0 group-hover:opacity-100 bg-white dark:bg-gray-700 dark:text-white rounded-full p-3 shadow-lg hover:bg-gray-50 dark:hover:bg-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
 				<button onclick="deleteGame('${game.id}')" class="opacity-0 group-hover:opacity-100 bg-red-500 rounded-full p-3 shadow-lg hover:bg-red-600"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
 				` : '<span class="opacity-0 group-hover:opacity-100 bg-black/50 text-white px-3 py-1 rounded-full text-xs">Read Only</span>'}
 			</div>
 		</div>
 		<div class="p-4">
-			<h3 class="font-semibold text-gray-900 truncate">${game.name}</h3>
-			<p class="text-sm text-gray-500 mb-2">${game.ownedBy}</p>
+			<h3 class="font-semibold text-gray-900 dark:text-white truncate">${game.name}</h3>
+			<p class="text-sm text-gray-500 dark:text-gray-400 mb-2">${game.ownedBy}</p>
 			<div class="flex flex-wrap gap-1.5">
-				<span class="px-2 py-0.5 text-xs font-medium rounded-full ${statusColors[game.status] || 'bg-gray-100 text-gray-600'}">${statusLabels[game.status] || game.status}</span>
-				${game.genres.slice(0, 2).map(g => `<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600">${g}</span>`).join('')}
+				<span class="px-2 py-0.5 text-xs font-medium rounded-full ${statusColors[game.status] || 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'}">${statusLabels[game.status] || game.status}</span>
+				${game.genres.slice(0, 2).map(g => `<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">${g}</span>`).join('')}
 			</div>
 		</div>
 	</div>`;
@@ -108,25 +131,25 @@ function NotificationCard(notif: GameNotif): string {
   }
 
   return `
-	<div class="bg-white rounded-xl border ${notif.active ? 'border-violet-200' : 'border-gray-200'} overflow-hidden ${isExpired ? 'opacity-50' : ''}">
+	<div class="bg-white dark:bg-[#1a1a1a] dark:border-gray-700 rounded-xl border ${notif.active ? 'border-violet-200 dark:border-violet-900' : 'border-gray-200 dark:border-gray-700'} overflow-hidden ${isExpired ? 'opacity-50' : ''}">
 		<div class="flex gap-4 p-4">
 			<div class="flex-shrink-0">
-				${game?.logo ? `<img src="${game.logo}" alt="${game.name}" class="w-16 h-16 rounded-xl object-contain bg-gray-100">` : '<div class="w-16 h-16 rounded-xl bg-violet-100 flex items-center justify-center"><svg class="w-8 h-8 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div>'}
+				${game?.logo ? `<img src="${game.logo}" alt="${game.name}" class="w-16 h-16 rounded-xl object-contain bg-gray-100 dark:bg-gray-800">` : '<div class="w-16 h-16 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center"><svg class="w-8 h-8 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg></div>'}
 			</div>
 			<div class="flex-1 min-w-0">
 				<div class="flex justify-between items-start">
 					<div>
-						<h3 class="font-semibold text-gray-900">${notif.title}</h3>
-						<p class="text-sm text-violet-600 font-medium">${game?.name || 'Unknown Game'}</p>
+						<h3 class="font-semibold text-gray-900 dark:text-white">${notif.title}</h3>
+						<p class="text-sm text-violet-600 dark:text-violet-400 font-medium">${game?.name || 'Unknown Game'}</p>
 					</div>
 					<div class="flex gap-1">
 						${canEdit ? `
-						<button onclick="editNotification('${notif.id}')" class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
-						<button onclick="deleteNotification('${notif.id}')" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+						<button onclick="editNotification('${notif.id}')" class="p-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
+						<button onclick="deleteNotification('${notif.id}')" class="p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
 						` : ''}
 					</div>
 				</div>
-				<p class="text-sm text-gray-500 mt-1 line-clamp-2">${notif.description}</p>
+				<p class="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">${notif.description}</p>
 			</div>
 		</div>
 		<div class="px-4 pb-4 flex items-center gap-3">
@@ -134,23 +157,23 @@ function NotificationCard(notif: GameNotif): string {
 				${timeDisplay}
 				${countdown ? `<span class="text-gray-400">${countdown.toLocaleDateString()} ${countdown.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>` : '<span class="text-gray-400 italic">No date set</span>'}
 			</div>
-			<span class="px-2 py-0.5 rounded-full text-xs font-medium ${notif.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">${notif.active ? 'Active' : 'Inactive'}</span>
-			${isExpired ? '<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Expired</span>' : ''}
+			<span class="px-2 py-0.5 rounded-full text-xs font-medium ${notif.active ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}">${notif.active ? 'Active' : 'Inactive'}</span>
+			${isExpired ? '<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Expired</span>' : ''}
 		</div>
 	</div>`;
 }
 
 function UserCard(user: User): string {
   return `
-    <div class="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between">
+    <div class="bg-white dark:bg-[#1a1a1a] dark:border-gray-700 rounded-xl border border-gray-200 p-4 flex items-center justify-between">
         <div>
-            <h3 class="font-semibold text-gray-900">${user.username}</h3>
-             <span class="px-2 py-0.5 text-xs font-medium rounded-full ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">${user.role}</span>
-             <p class="text-xs text-gray-500 mt-1">Access: ${user.allowedStudios.includes('*') ? 'All Studios' : user.allowedStudios.join(', ')}</p>
+            <h3 class="font-semibold text-gray-900 dark:text-white">${user.username}</h3>
+             <span class="px-2 py-0.5 text-xs font-medium rounded-full ${user.role === 'admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'}">${user.role}</span>
+             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Access: ${user.allowedStudios.includes('*') ? 'All Studios' : user.allowedStudios.join(', ')}</p>
         </div>
         <div class="flex gap-2">
-            <button onclick="editUser('${user.username}')" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
-            <button onclick="deleteUser('${user.username}')" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+            <button onclick="editUser('${user.username}')" class="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
+            <button onclick="deleteUser('${user.username}')" class="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
         </div>
     </div>
     `;
@@ -158,25 +181,25 @@ function UserCard(user: User): string {
 
 function StudioCard(studio: Studio): string {
   return `
-    <div class="bg-white rounded-xl border border-gray-200 p-4 relative group">
+    <div class="bg-white dark:bg-[#1a1a1a] dark:border-gray-700 rounded-xl border border-gray-200 p-4 relative group">
         <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-             <button onclick="editStudio('${studio.id}')" class="p-2 bg-white text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg shadow-sm border"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
+             <button onclick="editStudio('${studio.id}')" class="p-2 bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg shadow-sm border dark:border-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
              <button onclick="deleteStudio('${studio.id}')" class="p-2 bg-red-500 text-white hover:bg-red-600 rounded-lg shadow-sm"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
         </div>
         <div class="flex items-center gap-4 mb-4">
-             <div class="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden border">
+             <div class="w-16 h-16 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden border dark:border-gray-700">
                  ${studio.logo ? `<img src="${studio.logo}" class="w-full h-full object-cover">` : `<span class="text-2xl font-bold text-gray-400">${studio.name.charAt(0)}</span>`}
              </div>
              <div>
-                 <h3 class="text-lg font-bold text-gray-900">${studio.name}</h3>
-                 <p class="text-xs text-gray-500 font-mono">ID: ${studio.id}</p>
-                 ${studio.hero ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Hero Front Page</span>' : ''}
+                 <h3 class="text-lg font-bold text-gray-900 dark:text-white">${studio.name}</h3>
+                 <p class="text-xs text-gray-500 dark:text-gray-400 font-mono">ID: ${studio.id}</p>
+                 ${studio.hero ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">Hero Front Page</span>' : ''}
              </div>
         </div>
-        ${studio.thumbnail ? `<div class="aspect-video bg-gray-100 rounded-lg overflow-hidden mb-3"><img src="${studio.thumbnail}" class="w-full h-full object-cover"></div>` : ''}
-        <p class="text-sm text-gray-600 line-clamp-2 mb-3">${studio.description || 'No description'}</p>
+        ${studio.thumbnail ? `<div class="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-3"><img src="${studio.thumbnail}" class="w-full h-full object-cover"></div>` : ''}
+        <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">${studio.description || 'No description'}</p>
         <div class="flex gap-2">
-            ${['discord', 'roblox', 'youtube'].filter(k => (studio as any)[k]).map(k => `<a href="${(studio as any)[k]}" target="_blank" class="text-gray-400 hover:text-violet-600"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 22c-5.523 0-10-4.477-10-10S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg></a>`).join('')}
+            ${['discord', 'roblox', 'youtube'].filter(k => (studio as any)[k]).map(k => `<a href="${(studio as any)[k]}" target="_blank" class="text-gray-400 hover:text-violet-600 dark:hover:text-violet-400"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 22c-5.523 0-10-4.477-10-10S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg></a>`).join('')}
         </div>
     </div>
     `;
@@ -378,16 +401,16 @@ function render() {
     const visibleStudios = studios.filter(s => hasPermission(s.name));
 
     mainContent = `
-			<aside class="w-56 bg-white border-r p-4 hidden lg:block">
+			<aside class="w-56 bg-white dark:bg-[#1a1a1a] dark:border-gray-700 border-r p-4 hidden lg:block">
 				<p class="px-2 py-1 text-xs font-semibold text-gray-400 uppercase">Studios</p>
-				<button onclick="setStudio('all')" class="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm ${currentStudio === 'all' ? 'bg-violet-50 text-violet-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}"><span class="w-1.5 h-1.5 rounded-full ${currentStudio === 'all' ? 'bg-violet-500' : 'bg-gray-300'}"></span>All Studios</button>
-				${visibleStudios.map(s => `<button onclick="setStudio('${s.id}')" class="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm ${currentStudio === s.id ? 'bg-violet-50 text-violet-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}"><span class="w-1.5 h-1.5 rounded-full ${currentStudio === s.id ? 'bg-violet-500' : 'bg-gray-300'}"></span>${s.name}</button>`).join('')}
+				<button onclick="setStudio('all')" class="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm ${currentStudio === 'all' ? 'bg-violet-50 text-violet-700 font-medium dark:bg-violet-900/30 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'}"><span class="w-1.5 h-1.5 rounded-full ${currentStudio === 'all' ? 'bg-violet-500' : 'bg-gray-300 dark:bg-gray-600'}"></span>All Studios</button>
+				${visibleStudios.map(s => `<button onclick="setStudio('${s.id}')" class="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm ${currentStudio === s.id ? 'bg-violet-50 text-violet-700 font-medium dark:bg-violet-900/30 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'}"><span class="w-1.5 h-1.5 rounded-full ${currentStudio === s.id ? 'bg-violet-500' : 'bg-gray-300 dark:bg-gray-600'}"></span>${s.name}</button>`).join('')}
 			</aside>
-			<main class="flex-1 p-6 bg-gray-50 overflow-auto">
+			<main class="flex-1 p-6 bg-gray-50 dark:bg-[#121212] overflow-auto">
 				<div class="flex justify-between items-center mb-6">
 					<div>
-						<h1 class="text-xl font-bold text-gray-900">Games</h1>
-						<p class="text-sm text-gray-500">${filtered.length} games</p>
+						<h1 class="text-xl font-bold text-gray-900 dark:text-white">Games</h1>
+						<p class="text-sm text-gray-500 dark:text-gray-400">${filtered.length} games</p>
 					</div>
 					<button onclick="newGame()" class="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>Add Game</button>
 				</div>
@@ -434,25 +457,30 @@ function render() {
   }
 
   document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-	<div class="min-h-screen flex flex-col">
-		<header class="bg-white border-b sticky top-0 z-40">
+	<div class="min-h-screen flex flex-col dark:bg-[#121212]">
+		<header class="bg-white dark:bg-[#1a1a1a] dark:border-gray-700 border-b sticky top-0 z-40">
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
 				<div class="flex items-center gap-3">
 					<div class="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center"><svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg></div>
-					<span class="font-semibold text-gray-900 hidden sm:block">AstralCore Panel</span>
+					<span class="font-semibold text-gray-900 dark:text-gray-100 hidden sm:block">AstralCore Panel</span>
 				</div>
 				<div class="flex items-center gap-2">
-					<button onclick="setView('games')" class="px-3 py-1.5 text-sm font-medium rounded-lg ${currentView === 'games' ? 'bg-violet-100 text-violet-700' : 'text-gray-600 hover:bg-gray-100'}">Games</button>
-					<button onclick="setView('notifications')" class="px-3 py-1.5 text-sm font-medium rounded-lg relative ${currentView === 'notifications' ? 'bg-violet-100 text-violet-700' : 'text-gray-600 hover:bg-gray-100'}">Announcements${activeNotifs.length > 0 ? `<span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">${activeNotifs.length}</span>` : ''}</button>
+                    <button onclick="toggleTheme()" class="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                        ${getTheme() === 'dark'
+      ? `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>`
+      : `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>`}
+                    </button>
+					<button onclick="setView('games')" class="px-3 py-1.5 text-sm font-medium rounded-lg ${currentView === 'games' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}">Games</button>
+					<button onclick="setView('notifications')" class="px-3 py-1.5 text-sm font-medium rounded-lg relative ${currentView === 'notifications' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}">Announcements${activeNotifs.length > 0 ? `<span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">${activeNotifs.length}</span>` : ''}</button>
                     ${currentUser?.role === 'admin' ?
-      `<button onclick="setView('users')" class="px-3 py-1.5 text-sm font-medium rounded-lg ${currentView === 'users' ? 'bg-violet-100 text-violet-700' : 'text-gray-600 hover:bg-gray-100'}">Users</button>
-                         <button onclick="setView('studios')" class="px-3 py-1.5 text-sm font-medium rounded-lg ${currentView === 'studios' ? 'bg-violet-100 text-violet-700' : 'text-gray-600 hover:bg-gray-100'}">Studios</button>`
+      `<button onclick="setView('users')" class="px-3 py-1.5 text-sm font-medium rounded-lg ${currentView === 'users' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}">Users</button>
+       <button onclick="setView('studios')" class="px-3 py-1.5 text-sm font-medium rounded-lg ${currentView === 'studios' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}">Studios</button>`
       : ''}
-					<a href="/api/logout" class="ml-2 text-sm text-gray-500 hover:text-gray-700">Sign out</a>
+					<a href="/api/logout" class="ml-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">Sign out</a>
 				</div>
 			</div>
 		</header>
-		<div class="flex-1 flex">
+		<div class="flex-1 flex dark:bg-[#121212]">
 			${mainContent}
 		</div>
 	</div>
@@ -465,6 +493,7 @@ function render() {
 }
 
 // Actions
+(window as any).toggleTheme = toggleTheme;
 (window as any).setView = (v: 'games' | 'notifications' | 'users' | 'studios') => { currentView = v; render(); };
 (window as any).setStudio = (id: string) => { currentStudio = id; render(); };
 
