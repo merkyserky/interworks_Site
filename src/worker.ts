@@ -4,7 +4,7 @@
  */
 
 export interface Env {
-    ASSETS: { fetch: typeof fetch };
+    ASSETS: { fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response> };
 }
 
 export default {
@@ -17,12 +17,7 @@ export default {
         const isPanelSubdomain = hostname.startsWith('panel.');
 
         if (isPanelSubdomain) {
-            // For panel subdomain:
-            // - Root path "/" -> serve /panel/index.html
-            // - Other paths without extension -> serve /panel/index.html (SPA)
-            // - Asset paths (/assets/*) -> serve directly from root (shared assets)
-            // - Panel-specific paths -> try /panel prefix first
-
+            // For panel subdomain, serve from /panel/ directory
             const pathname = url.pathname;
 
             // Assets are at the root level, serve them directly
@@ -32,15 +27,29 @@ export default {
 
             // For root or paths without file extension, serve panel's index.html
             if (pathname === '/' || !pathname.match(/\.[a-zA-Z0-9]+$/)) {
-                const panelIndexUrl = new URL(request.url);
+                // Create a new URL pointing to the panel index
+                const panelIndexUrl = new URL(url);
                 panelIndexUrl.pathname = '/panel/index.html';
-                return env.ASSETS.fetch(panelIndexUrl);
+
+                // Create a new request with the modified URL
+                const panelRequest = new Request(panelIndexUrl.toString(), {
+                    method: request.method,
+                    headers: request.headers,
+                });
+
+                return env.ASSETS.fetch(panelRequest);
             }
 
             // Try to serve from /panel/ directory first
-            const panelUrl = new URL(request.url);
+            const panelUrl = new URL(url);
             panelUrl.pathname = '/panel' + pathname;
-            let response = await env.ASSETS.fetch(panelUrl);
+
+            const panelRequest = new Request(panelUrl.toString(), {
+                method: request.method,
+                headers: request.headers,
+            });
+
+            let response = await env.ASSETS.fetch(panelRequest);
 
             // If not found in /panel/, try root
             if (response.status === 404) {
@@ -55,9 +64,15 @@ export default {
 
         // SPA fallback for main site
         if (response.status === 404 && !url.pathname.match(/\.[a-zA-Z0-9]+$/)) {
-            const indexUrl = new URL(request.url);
+            const indexUrl = new URL(url);
             indexUrl.pathname = '/index.html';
-            response = await env.ASSETS.fetch(indexUrl);
+
+            const indexRequest = new Request(indexUrl.toString(), {
+                method: request.method,
+                headers: request.headers,
+            });
+
+            response = await env.ASSETS.fetch(indexRequest);
         }
 
         return response;

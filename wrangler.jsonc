@@ -11,7 +11,9 @@
 		// Cloudflare will serve static files from the Vite build output
 		"directory": "./dist",
 		// Let Worker handle routing instead of auto-serving
-		"binding": "ASSETS"
+		"binding": "ASSETS",
+		// Ensure Worker runs first for all requests
+		"run_worker_first": true
 	},
 	"routes": [
 		{
