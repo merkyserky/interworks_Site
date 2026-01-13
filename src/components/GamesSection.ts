@@ -15,6 +15,7 @@ export interface Game {
     studioLogo?: string
     description?: string
     ownedBy?: string
+    ownedByUrl?: string
     link?: string
     youtubeVideoId?: string
     thumbnails?: readonly string[]    // Array of thumbnail images (cycles when paused)
@@ -342,7 +343,14 @@ function createGameCard(game: Game): HTMLElement {
     // Owned By
     if (game.ownedBy) {
         const ownedByEl = document.createElement('div')
-        ownedByEl.innerHTML = `<span class="text-gray-500">Owned By:</span> <span class="text-indigo-400">${game.ownedBy}</span>`
+        const label = '<span class="text-gray-500">Owned By:</span>'
+        const value = `<span class="${game.ownedByUrl ? 'text-indigo-400 hover:text-indigo-300 transition-colors' : 'text-indigo-400'}">${game.ownedBy}</span>`
+
+        if (game.ownedByUrl) {
+            ownedByEl.innerHTML = `${label} <a href="${game.ownedByUrl}" target="_blank" class="inline-flex items-center gap-1 hover:underline decoration-indigo-400/30">${value} <svg class="w-3.5 h-3.5 text-[#5865F2]" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037 13.486 13.486 0 00-.594 1.226c-2.176-.328-4.352-.328-6.505 0a13.482 13.482 0 00-.602-1.226.075.075 0 00-.079-.037A19.736 19.736 0 002.66 4.37a.072.072 0 00-.03.047C.612 10.976 1.765 17.58 4.295 21.054a.077.077 0 00.088.026 19.988 19.988 0 006.014-3.03.076.076 0 00.038-.052 14.167 14.167 0 01-2.261-1.077.073.073 0 01.002-.122 10.02 10.02 0 00.916-.445.075.075 0 01.078.006 14.28 14.28 0 004.977 1.018 14.285 14.285 0 004.982-1.018.075.075 0 01.078-.006 10.063 10.063 0 00.911.445.074.074 0 01.003.122 14.074 14.074 0 01-2.266 1.077.075.075 0 00.037.052 19.967 19.967 0 006.02 3.03.078.078 0 00.087-.026c2.617-3.593 3.738-10.292 1.638-16.637a.072.072 0 00-.03-.047zM8.534 14.896c-1.12 0-2.036-1.03-2.036-2.296 0-1.266.896-2.296 2.036-2.296 1.137 0 2.053 1.03 2.053 2.296 0 1.266-.897 2.296-2.053 2.296zm6.983 0c-1.12 0-2.036-1.03-2.036-2.296 0-1.266.896-2.296 2.036-2.296 1.137 0 2.053 1.03 2.053 2.296 0 1.266-.897 2.296-2.053 2.296z"/></svg></a>`
+        } else {
+            ownedByEl.innerHTML = `${label} ${value}`
+        }
         metaRow.appendChild(ownedByEl)
     }
 
