@@ -15,11 +15,15 @@
 		// Ensure Worker runs first for all requests
 		"run_worker_first": true
 	},
-	// KV namespace for panel authentication - edit credentials in Cloudflare Dashboard
+	// KV namespaces for panel data - edit in Cloudflare Dashboard
 	"kv_namespaces": [
 		{
 			"binding": "PANEL_AUTH",
 			"id": "6dfa00f3aeb84426b2b768d39ede8145"
+		},
+		{
+			"binding": "GAMES_DATABASE",
+			"id": "b4bcd6cac2794648821b7642e6d0b213"
 		}
 	],
 	"routes": [
