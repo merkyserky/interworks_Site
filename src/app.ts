@@ -22,7 +22,21 @@ const SITE_CONFIG = {
 } as const
 
 function convertGame(game: Game) {
-    return { id: game.id, name: game.name, logo: game.logo, description: game.description, ownedBy: game.ownedBy, status: game.status, genre: game.genres.join(', '), youtubeVideoId: game.youtubeVideoId, thumbnails: game.thumbnails, spotifyAlbums: game.spotifyAlbums, link: game.link }
+    const studio = studios.find(s => s.name === game.ownedBy);
+    return {
+        id: game.id,
+        name: game.name,
+        logo: game.logo,
+        description: game.description,
+        ownedBy: game.ownedBy,
+        ownedByUrl: studio?.discord,
+        status: game.status,
+        genre: game.genres.join(', '),
+        youtubeVideoId: game.youtubeVideoId,
+        thumbnails: game.thumbnails,
+        spotifyAlbums: game.spotifyAlbums,
+        link: game.link
+    }
 }
 
 // State
