@@ -16,21 +16,34 @@ export default {
         const isPanelSubdomain = hostname.startsWith('panel.');
 
         if (isPanelSubdomain) {
-            // Rewrite the path to serve from /panel directory
-            const panelUrl = new URL(request.url);
+            // For panel subdomain:
+            // - Root path "/" -> serve /panel/index.html
+            // - Other paths without extension -> serve /panel/index.html (SPA)
+            // - Asset paths (/assets/*) -> serve directly from root (shared assets)
+            // - Panel-specific paths -> try /panel prefix first
 
-            // If root or doesn't start with /panel, prepend /panel
-            if (panelUrl.pathname === '/' || !panelUrl.pathname.startsWith('/panel')) {
-                panelUrl.pathname = '/panel' + panelUrl.pathname;
+            const pathname = url.pathname;
+
+            // Assets are at the root level, serve them directly
+            if (pathname.startsWith('/assets/')) {
+                return env.ASSETS.fetch(request);
             }
 
-            // Try to fetch the asset
+            // For root or paths without file extension, serve panel's index.html
+            if (pathname === '/' || !pathname.match(/\.[a-zA-Z0-9]+$/)) {
+                const panelIndexUrl = new URL(request.url);
+                panelIndexUrl.pathname = '/panel/index.html';
+                return env.ASSETS.fetch(panelIndexUrl);
+            }
+
+            // Try to serve from /panel/ directory first
+            const panelUrl = new URL(request.url);
+            panelUrl.pathname = '/panel' + pathname;
             let response = await env.ASSETS.fetch(panelUrl);
 
-            // If 404 and it's not a file request (no extension), serve panel's index.html for SPA routing
-            if (response.status === 404 && !panelUrl.pathname.match(/\.[a-zA-Z0-9]+$/)) {
-                panelUrl.pathname = '/panel/index.html';
-                response = await env.ASSETS.fetch(panelUrl);
+            // If not found in /panel/, try root
+            if (response.status === 404) {
+                response = await env.ASSETS.fetch(request);
             }
 
             return response;
