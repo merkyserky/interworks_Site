@@ -401,6 +401,42 @@ function render() {
     const visibleStudios = studios.filter(s => hasPermission(s.name));
 
     mainContent = `
+			<!-- Sidebar for Desktop -->
+            <aside class="w-64 bg-white dark:bg-[#1a1a1a] dark:border-gray-700 border-r hidden lg:flex flex-col">
+                <div class="p-4 border-b dark:border-gray-700">
+                    <h2 class="font-semibold text-gray-900 dark:text-white uppercase text-xs tracking-wider">Explorer</h2>
+                </div>
+                <div class="flex-1 overflow-y-auto p-2 space-y-1">
+                    <button onclick="setStudio('all')" class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${currentStudio === 'all' ? 'bg-violet-50 text-violet-700 font-medium dark:bg-violet-900/30 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                        All Games
+                    </button>
+                    ${visibleStudios.map(s => {
+      const studioGames = games.filter(g => g.ownedBy === s.name);
+      return `
+                        <details class="group" ${currentStudio === s.id ? 'open' : ''}>
+                            <summary class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer select-none text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800" onclick="setStudio('${s.id}')">
+                                <svg class="w-4 h-4 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                <span class="${currentStudio === s.id ? 'text-violet-600 dark:text-violet-400 font-medium' : ''}">${s.name}</span>
+                            </summary>
+                            <div class="pl-9 mt-1 space-y-0.5">
+                                ${studioGames.map(g => `
+                                    <button onclick="editGame('${g.id}')" class="w-full text-left px-2 py-1.5 rounded text-xs text-gray-500 hover:text-violet-600 hover:bg-violet-50 dark:text-gray-500 dark:hover:text-violet-300 dark:hover:bg-violet-900/20 truncate transition-colors flex items-center gap-2">
+                                        <div class="w-1.5 h-1.5 rounded-full ${statusColors[g.status]?.includes('green') ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}"></div>
+                                        ${g.name}
+                                    </button>
+                                `).join('')}
+                                <button onclick="newGame()" class="w-full text-left px-2 py-1.5 rounded text-xs text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 italic flex items-center gap-2">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                    Add Game
+                                </button>
+                            </div>
+                        </details>
+                        `;
+    }).join('')}
+                </div>
+            </aside>
+            
 			<main class="flex-1 p-4 lg:p-8 bg-gray-50 dark:bg-[#121212] overflow-auto">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                     <div>
@@ -408,7 +444,8 @@ function render() {
                         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage and monitor your game statuses</p>
                     </div>
                     <div class="flex items-center gap-3">
-                         <div class="relative">
+                         <!-- Mobile Dropdown only -->
+                         <div class="relative lg:hidden">
                             <select onchange="setStudio(this.value)" class="appearance-none bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 py-2.5 pl-4 pr-10 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/20">
                                 <option value="all" ${currentStudio === 'all' ? 'selected' : ''}>All Studios</option>
                                 ${visibleStudios.map(s => `<option value="${s.id}" ${currentStudio === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
