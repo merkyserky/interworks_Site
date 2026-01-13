@@ -18,6 +18,7 @@ const SITE_CONFIG = {
     company: { name: 'ASTRAL CORE + INTERWORKS INC', displayName: 'Astral Core + Interworks Inc' },
     // Removed specific links, handled by click events now
     hero: { ctaText: 'View Games', ctaHref: '#' },
+    games: { heading: 'Games', subheading: 'Explore our upcoming games' },
 } as const
 
 function convertGame(game: Game) {
