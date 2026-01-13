@@ -135,10 +135,7 @@ function getSessionToken(request: Request): string | null {
     return match ? match[1] : null;
 }
 
-function getSessionUser(request: Request) {
-    const token = getSessionToken(request);
-    return token ? sessions.get(token) : null;
-}
+
 
 function corsHeaders(): HeadersInit {
     return {

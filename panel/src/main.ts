@@ -527,23 +527,19 @@ let appendMode = false;
     const me = await api.get<User>('/api/me');
     currentUser = me;
 
-    const promises = [
+    const results = await Promise.all([
       api.get<Game[]>('/api/games'),
       api.get<Studio[]>('/api/studios'),
       api.get<GameNotif[]>('/api/announcements'),
-      api.get<string[]>('/api/media')
-    ];
+      api.get<string[]>('/api/media'),
+      currentUser.role === 'admin' ? api.get<User[]>('/api/users') : Promise.resolve(null)
+    ]);
 
-    if (currentUser.role === 'admin') {
-      promises.push(api.get<User[]>('/api/users'));
-    }
-
-    const results = await Promise.all(promises);
     games = results[0];
     studios = results[1];
     notifications = results[2];
     mediaFiles = results[3];
-    if (results[4]) users = results[4] as User[];
+    if (results[4]) users = results[4];
 
     render();
   } catch (e) {
