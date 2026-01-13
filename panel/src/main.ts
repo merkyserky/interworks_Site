@@ -213,33 +213,33 @@ function GameEditor(game: Game | null): string {
 
   return `
 	<div id="game-editor" class="fixed inset-0 z-50 flex items-center justify-center p-4" onclick="if(event.target===this)closeEditor()">
-		<div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-			<div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-				<h2 class="text-lg font-semibold">${isNew ? 'Add Game' : 'Edit Game'}</h2>
-				<button onclick="closeEditor()" class="p-2 hover:bg-gray-200 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+		<div class="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border dark:border-gray-700">
+			<div class="px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800">
+				<h2 class="text-lg font-semibold text-gray-900 dark:text-white">${isNew ? 'Add Game' : 'Edit Game'}</h2>
+				<button onclick="closeEditor()" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-gray-500 dark:text-gray-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
 			</div>
 			<div class="flex-1 overflow-auto p-6 space-y-4">
 				<div class="grid grid-cols-2 gap-4">
-					<div class="col-span-2"><label class="block text-sm font-medium text-gray-700 mb-1">Name *</label><input id="ed-name" value="${game.name}" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"></div>
-					<div><label class="block text-sm font-medium text-gray-700 mb-1">Studio *</label><select id="ed-ownedBy" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500">${allowedStudios.map(s => `<option value="${s.name}" ${game.ownedBy === s.name ? 'selected' : ''}>${s.name}</option>`).join('')}</select></div>
-					<div><label class="block text-sm font-medium text-gray-700 mb-1">Status</label><select id="ed-status" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500"><option value="coming-soon" ${game.status === 'coming-soon' ? 'selected' : ''}>Coming Soon</option><option value="in-development" ${game.status === 'in-development' ? 'selected' : ''}>In Development</option><option value="beta" ${game.status === 'beta' ? 'selected' : ''}>Beta</option><option value="playable" ${game.status === 'playable' ? 'selected' : ''}>Playable</option></select></div>
+					<div class="col-span-2"><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name *</label><input id="ed-name" value="${game.name}" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></div>
+					<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Studio *</label><select id="ed-ownedBy" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white">${allowedStudios.map(s => `<option value="${s.name}" ${game.ownedBy === s.name ? 'selected' : ''}>${s.name}</option>`).join('')}</select></div>
+					<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label><select id="ed-status" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"><option value="coming-soon" ${game.status === 'coming-soon' ? 'selected' : ''}>Coming Soon</option><option value="in-development" ${game.status === 'in-development' ? 'selected' : ''}>In Development</option><option value="beta" ${game.status === 'beta' ? 'selected' : ''}>Beta</option><option value="playable" ${game.status === 'playable' ? 'selected' : ''}>Playable</option></select></div>
 				</div>
-				<div><label class="block text-sm font-medium text-gray-700 mb-1">Genres (comma separated)</label><input id="ed-genres" value="${game.genres.join(', ')}" placeholder="Horror, Mystery, Adventure" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500"></div>
-				<div><label class="block text-sm font-medium text-gray-700 mb-1">Description</label><textarea id="ed-description" rows="3" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500 resize-none">${game.description}</textarea></div>
-				<div><label class="block text-sm font-medium text-gray-700 mb-1">Logo / Image</label><div class="flex gap-2"><input id="ed-logo" value="${game.logo}" class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500"><button onclick="openMedia('ed-logo')" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">📷</button></div></div>
-				<div><label class="block text-sm font-medium text-gray-700 mb-1">Thumbnails (comma separated)</label><div class="flex gap-2"><input id="ed-thumbnails" value="${(game.thumbnails || []).join(', ')}" class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500"><button onclick="openMedia('ed-thumbnails',true)" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">📷</button></div></div>
+				<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Genres (comma separated)</label><input id="ed-genres" value="${game.genres.join(', ')}" placeholder="Horror, Mystery, Adventure" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></div>
+				<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label><textarea id="ed-description" rows="3" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white">${game.description}</textarea></div>
+				<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Logo / Image</label><div class="flex gap-2"><input id="ed-logo" value="${game.logo}" class="flex-1 px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"><button onclick="openMedia('ed-logo')" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-gray-700 dark:text-gray-200">📷</button></div></div>
+				<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Thumbnails (comma separated)</label><div class="flex gap-2"><input id="ed-thumbnails" value="${(game.thumbnails || []).join(', ')}" class="flex-1 px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"><button onclick="openMedia('ed-thumbnails',true)" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-gray-700 dark:text-gray-200">📷</button></div></div>
 				<div class="grid grid-cols-2 gap-4">
-					<div><label class="block text-sm font-medium text-gray-700 mb-1">YouTube Video ID</label><input id="ed-youtube" value="${game.youtubeVideoId || ''}" placeholder="dQw4w9WgXcQ" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500"></div>
-					<div><label class="block text-sm font-medium text-gray-700 mb-1">Game Link</label><input id="ed-link" value="${game.link || ''}" placeholder="https://roblox.com/games/..." class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500"></div>
+					<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">YouTube Video ID</label><input id="ed-youtube" value="${game.youtubeVideoId || ''}" placeholder="dQw4w9WgXcQ" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></div>
+					<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Game Link</label><input id="ed-link" value="${game.link || ''}" placeholder="https://roblox.com/games/..." class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></div>
 				</div>
                 <div class="grid grid-cols-2 gap-4">
-					<div><label class="block text-sm font-medium text-gray-700 mb-1">Sort Order (Lower = First)</label><input type="number" id="ed-order" value="${game.order ?? 0}" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500"></div>
-					<div class="flex items-center mt-6"><label class="flex items-center gap-2"><input type="checkbox" id="ed-visible" ${game.visible !== false ? 'checked' : ''} class="w-4 h-4 text-violet-600 rounded"><span class="text-sm font-medium text-gray-700">Visible on Main Site</span></label></div>
+					<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sort Order (Lower = First)</label><input type="number" id="ed-order" value="${game.order ?? 0}" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></div>
+					<div class="flex items-center mt-6"><label class="flex items-center gap-2"><input type="checkbox" id="ed-visible" ${game.visible !== false ? 'checked' : ''} class="w-4 h-4 text-violet-600 rounded bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"><span class="text-sm font-medium text-gray-700 dark:text-gray-300">Visible on Main Site</span></label></div>
 				</div>
-				<div><label class="block text-sm font-medium text-gray-700 mb-1">Spotify Albums (JSON array)</label><textarea id="ed-spotify" rows="2" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500 resize-none font-mono text-sm">${JSON.stringify(game.spotifyAlbums || [])}</textarea><p class="text-xs text-gray-400 mt-1">[{"name":"OST","spotifyId":"abc123"}]</p></div>
+				<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Spotify Albums (JSON array)</label><textarea id="ed-spotify" rows="2" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 resize-none font-mono text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white">${JSON.stringify(game.spotifyAlbums || [])}</textarea><p class="text-xs text-gray-400 mt-1">[{"name":"OST","spotifyId":"abc123"}]</p></div>
 			</div>
-			<div class="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
-				<button onclick="closeEditor()" class="px-4 py-2 hover:bg-gray-100 rounded-lg">Cancel</button>
+			<div class="px-6 py-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-end gap-3">
+				<button onclick="closeEditor()" class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-200">Cancel</button>
 				<button onclick="saveGameData()" class="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700">${isNew ? 'Create' : 'Save'}</button>
 			</div>
 		</div>
@@ -256,24 +256,24 @@ function NotificationEditor(notif: GameNotif | null): string {
 
   return `
 	<div id="notif-editor" class="fixed inset-0 z-50 flex items-center justify-center p-4" onclick="if(event.target===this)closeNotifEditor()">
-		<div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-			<div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-				<h2 class="text-lg font-semibold">${isNew ? 'Add Notification' : 'Edit Notification'}</h2>
-				<button onclick="closeNotifEditor()" class="p-2 hover:bg-gray-200 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+		<div class="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border dark:border-gray-700">
+			<div class="px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800">
+				<h2 class="text-lg font-semibold text-gray-900 dark:text-white">${isNew ? 'Add Notification' : 'Edit Notification'}</h2>
+				<button onclick="closeNotifEditor()" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-gray-500 dark:text-gray-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
 			</div>
 			<div class="p-6 space-y-4">
-				<div><label class="block text-sm font-medium text-gray-700 mb-1">Game *</label><select id="nf-gameId" class="w-full px-3 py-2 border rounded-lg">${allowedGames.map(g => `<option value="${g.id}" ${notif.gameId === g.id ? 'selected' : ''}>${g.name}</option>`).join('')}</select></div>
-				<div><label class="block text-sm font-medium text-gray-700 mb-1">Title *</label><input id="nf-title" value="${notif.title}" class="w-full px-3 py-2 border rounded-lg"></div>
-				<div><label class="block text-sm font-medium text-gray-700 mb-1">Description</label><textarea id="nf-description" rows="2" class="w-full px-3 py-2 border rounded-lg resize-none">${notif.description}</textarea></div>
-				<div><label class="block text-sm font-medium text-gray-700 mb-1">Countdown To *</label><input type="datetime-local" id="nf-countdown" value="${dateValue}" class="w-full px-3 py-2 border rounded-lg"></div>
+				<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Game *</label><select id="nf-gameId" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">${allowedGames.map(g => `<option value="${g.id}" ${notif.gameId === g.id ? 'selected' : ''}>${g.name}</option>`).join('')}</select></div>
+				<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label><input id="nf-title" value="${notif.title}" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></div>
+				<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label><textarea id="nf-description" rows="2" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white">${notif.description}</textarea></div>
+				<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Countdown To *</label><input type="datetime-local" id="nf-countdown" value="${dateValue}" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></div>
 				<div class="grid grid-cols-2 gap-4">
-					<div><label class="block text-sm font-medium text-gray-700 mb-1">YouTube Video ID</label><input id="nf-youtube" value="${notif.youtubeVideoId || ''}" class="w-full px-3 py-2 border rounded-lg"></div>
-					<div><label class="block text-sm font-medium text-gray-700 mb-1">Link</label><input id="nf-link" value="${notif.link || ''}" class="w-full px-3 py-2 border rounded-lg"></div>
+					<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">YouTube Video ID</label><input id="nf-youtube" value="${notif.youtubeVideoId || ''}" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></div>
+					<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Link</label><input id="nf-link" value="${notif.link || ''}" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></div>
 				</div>
-				<label class="flex items-center gap-2"><input type="checkbox" id="nf-active" ${notif.active ? 'checked' : ''} class="w-4 h-4 text-violet-600 rounded"><span class="text-sm font-medium text-gray-700">Active</span></label>
+				<label class="flex items-center gap-2"><input type="checkbox" id="nf-active" ${notif.active ? 'checked' : ''} class="w-4 h-4 text-violet-600 rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"><span class="text-sm font-medium text-gray-700 dark:text-gray-300">Active</span></label>
 			</div>
-			<div class="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
-				<button onclick="closeNotifEditor()" class="px-4 py-2 hover:bg-gray-100 rounded-lg">Cancel</button>
+			<div class="px-6 py-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-end gap-3">
+				<button onclick="closeNotifEditor()" class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-200">Cancel</button>
 				<button onclick="saveNotifData()" class="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700">${isNew ? 'Create' : 'Save'}</button>
 			</div>
 		</div>
@@ -286,34 +286,34 @@ function UserEditor(user: User | null): string {
 
   return `
     <div id="user-editor" class="fixed inset-0 z-50 flex items-center justify-center p-4" onclick="if(event.target===this)closeUserEditor()">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-                <h2 class="text-lg font-semibold">${isNew ? 'New User' : 'Edit User: ' + user.username}</h2>
-                <button onclick="closeUserEditor()" class="p-2 hover:bg-gray-200 rounded-lg">✕</button>
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border dark:border-gray-700">
+            <div class="px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">${isNew ? 'New User' : 'Edit User: ' + user.username}</h2>
+                <button onclick="closeUserEditor()" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-gray-500 dark:text-gray-400">✕</button>
             </div>
             <div class="p-6 space-y-4">
-                ${isNew ? `<div><label class="block text-sm font-medium text-gray-700 mb-1">Username *</label><input id="us-username" class="w-full px-3 py-2 border rounded-lg"></div>` : ''}
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Password ${isNew ? '*' : '(Leave blank to keep)'}</label><input type="password" id="us-password" class="w-full px-3 py-2 border rounded-lg"></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Role</label><select id="us-role" class="w-full px-3 py-2 border rounded-lg"><option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option><option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option></select></div>
+                ${isNew ? `<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username *</label><input id="us-username" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></div>` : ''}
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password ${isNew ? '*' : '(Leave blank to keep)'}</label><input type="password" id="us-password" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label><select id="us-role" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"><option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option><option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option></select></div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Allowed Studios</label>
-                    <div class="space-y-2 max-h-40 overflow-y-auto border p-2 rounded-lg">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Allowed Studios</label>
+                    <div class="space-y-2 max-h-40 overflow-y-auto border dark:border-gray-600 p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
                         <label class="flex items-center gap-2">
-                            <input type="checkbox" name="us-studios" value="*" ${user.allowedStudios.includes('*') ? 'checked' : ''} onchange="toggleAllStudios(this)" class="w-4 h-4 text-violet-600 rounded">
-                            <span class="text-sm font-medium">All Studios</span>
+                            <input type="checkbox" name="us-studios" value="*" ${user.allowedStudios.includes('*') ? 'checked' : ''} onchange="toggleAllStudios(this)" class="w-4 h-4 text-violet-600 rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">All Studios</span>
                         </label>
                         ${studios.map(s => `
                             <label class="flex items-center gap-2 pl-4">
-                                <input type="checkbox" name="us-studios" value="${s.name}" ${user.allowedStudios.includes(s.name) || user.allowedStudios.includes('*') ? 'checked' : ''} class="w-4 h-4 text-violet-600 rounded studio-check">
-                                <span class="text-sm">${s.name}</span>
+                                <input type="checkbox" name="us-studios" value="${s.name}" ${user.allowedStudios.includes(s.name) || user.allowedStudios.includes('*') ? 'checked' : ''} class="w-4 h-4 text-violet-600 rounded studio-check border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
+                                <span class="text-sm text-gray-700 dark:text-gray-300">${s.name}</span>
                             </label>
                         `).join('')}
                     </div>
                 </div>
             </div>
-            <div class="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
-                <button onclick="closeUserEditor()" class="px-4 py-2 hover:bg-gray-100 rounded-lg">Cancel</button>
+            <div class="px-6 py-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-end gap-3">
+                <button onclick="closeUserEditor()" class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-200">Cancel</button>
                 <button onclick="saveUserData()" class="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700">Save</button>
             </div>
         </div>
@@ -327,41 +327,41 @@ function StudioEditor(studio: Studio | null): string {
 
   return `
     <div id="studio-editor" class="fixed inset-0 z-50 flex items-center justify-center p-4" onclick="if(event.target===this)closeStudioEditor()">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-                <h2 class="text-lg font-semibold">${isNew ? 'New Studio' : 'Edit Studio'}</h2>
-                <button onclick="closeStudioEditor()" class="p-2 hover:bg-gray-200 rounded-lg">✕</button>
+        <div class="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border dark:border-gray-700">
+            <div class="px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">${isNew ? 'New Studio' : 'Edit Studio'}</h2>
+                <button onclick="closeStudioEditor()" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-gray-500 dark:text-gray-400">✕</button>
             </div>
             <div class="flex-1 overflow-auto p-6 space-y-4">
                 <div class="grid grid-cols-2 gap-4">
-                     ${isNew ? `<div><label class="block text-sm font-medium text-gray-700 mb-1">ID (unique) *</label><input id="st-id" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500"></div>` : `<div><label class="block text-sm font-medium text-gray-700 mb-1">ID</label><input disabled value="${studio.id}" class="w-full px-3 py-2 border rounded-lg bg-gray-100 text-gray-500"></div>`}
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Name *</label><input id="st-name" value="${studio.name}" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500"></div>
+                     ${isNew ? `<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ID (unique) *</label><input id="st-id" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></div>` : `<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ID</label><input disabled value="${studio.id}" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"></div>`}
+                    <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name *</label><input id="st-name" value="${studio.name}" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></div>
                 </div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Description</label><textarea id="st-description" rows="2" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500 resize-none">${studio.description || ''}</textarea></div>
+                <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label><textarea id="st-description" rows="2" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white">${studio.description || ''}</textarea></div>
                 <div class="grid grid-cols-2 gap-4">
                      <div>
-                         <label class="block text-sm font-medium text-gray-700 mb-1">Logo</label>
-                         <div class="flex gap-2"><input id="st-logo" value="${studio.logo || ''}" class="flex-1 px-3 py-2 border rounded-lg"><button onclick="openMedia('st-logo')" class="px-3 py-2 bg-gray-100 rounded-lg">📷</button></div>
+                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Logo</label>
+                         <div class="flex gap-2"><input id="st-logo" value="${studio.logo || ''}" class="flex-1 px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"><button onclick="openMedia('st-logo')" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg">📷</button></div>
                      </div>
                      <div>
-                         <label class="block text-sm font-medium text-gray-700 mb-1">Thumbnail</label>
-                         <div class="flex gap-2"><input id="st-thumbnail" value="${studio.thumbnail || ''}" class="flex-1 px-3 py-2 border rounded-lg"><button onclick="openMedia('st-thumbnail')" class="px-3 py-2 bg-gray-100 rounded-lg">📷</button></div>
+                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Thumbnail</label>
+                         <div class="flex gap-2"><input id="st-thumbnail" value="${studio.thumbnail || ''}" class="flex-1 px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"><button onclick="openMedia('st-thumbnail')" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg">📷</button></div>
                      </div>
                 </div>
-                 <div><label class="block text-sm font-medium text-gray-700 mb-1">Media (comma separated)</label><div class="flex gap-2"><input id="st-media" value="${(studio.media || []).join(', ')}" class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500"><button onclick="openMedia('st-media',true)" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">📷</button></div></div>
-                <hr class="my-2">
+                 <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Media (comma separated)</label><div class="flex gap-2"><input id="st-media" value="${(studio.media || []).join(', ')}" class="flex-1 px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"><button onclick="openMedia('st-media',true)" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg">📷</button></div></div>
+                <hr class="my-2 dark:border-gray-600">
                  <div class="grid grid-cols-3 gap-4">
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Discord Link</label><input id="st-discord" value="${studio.discord || ''}" class="w-full px-3 py-2 border rounded-lg"></div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Roblox Link</label><input id="st-roblox" value="${studio.roblox || ''}" class="w-full px-3 py-2 border rounded-lg"></div>
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1">YouTube Link</label><input id="st-youtube" value="${studio.youtube || ''}" class="w-full px-3 py-2 border rounded-lg"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Discord Link</label><input id="st-discord" value="${studio.discord || ''}" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Roblox Link</label><input id="st-roblox" value="${studio.roblox || ''}" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">YouTube Link</label><input id="st-youtube" value="${studio.youtube || ''}" class="w-full px-3 py-2 border dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></div>
                 </div>
                 <label class="flex items-center gap-2 mt-2">
-                     <input type="checkbox" id="st-hero" ${studio.hero ? 'checked' : ''} class="w-4 h-4 text-violet-600 rounded">
-                     <span class="text-sm font-medium text-gray-700">Display on Hero Front Page</span>
+                     <input type="checkbox" id="st-hero" ${studio.hero ? 'checked' : ''} class="w-4 h-4 text-violet-600 rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
+                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Display on Hero Front Page</span>
                 </label>
             </div>
-            <div class="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
-                <button onclick="closeStudioEditor()" class="px-4 py-2 hover:bg-gray-100 rounded-lg">Cancel</button>
+            <div class="px-6 py-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-end gap-3">
+                <button onclick="closeStudioEditor()" class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-200">Cancel</button>
                 <button onclick="saveStudioData()" class="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700">Save</button>
             </div>
         </div>
@@ -373,18 +373,18 @@ function MediaPicker(): string {
   return `
 	<div id="media-picker" class="fixed inset-0 z-[60] hidden">
 		<div class="absolute inset-0 bg-black/50" onclick="closeMedia()"></div>
-		<div class="absolute inset-8 bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-			<div class="px-6 py-4 border-b flex justify-between items-center"><h2 class="font-semibold">Select Media</h2><button onclick="closeMedia()" class="p-2 hover:bg-gray-100 rounded-lg">✕</button></div>
+		<div class="absolute inset-8 bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-2xl overflow-hidden flex flex-col border dark:border-gray-700">
+			<div class="px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center"><h2 class="font-semibold text-gray-900 dark:text-white">Select Media</h2><button onclick="closeMedia()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-500 dark:text-gray-400">✕</button></div>
             
-            <div class="px-6 py-4 bg-gray-50 border-b">
+            <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
                  <div class="flex gap-2">
-                     <input id="media-custom-url" placeholder="https://..." class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500">
+                     <input id="media-custom-url" placeholder="https://..." class="flex-1 px-3 py-2 border dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                      <button onclick="pickMedia(document.getElementById('media-custom-url').value)" class="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700">Use URL</button>
                  </div>
             </div>
 
-			<div class="flex-1 overflow-auto p-6 grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
-				${mediaFiles.map(f => `<button onclick="pickMedia('${f}')" class="aspect-square bg-gray-100 rounded-xl overflow-hidden border-2 border-transparent hover:border-violet-500"><img src="${f}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=\\'flex items-center justify-center h-full text-xs text-gray-400 p-2 break-all\\'>${f.split('/').pop()}</div>'"></button>`).join('')}
+			<div class="flex-1 overflow-auto p-6 grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4 bg-white dark:bg-[#1a1a1a]">
+				${mediaFiles.map(f => `<button onclick="pickMedia('${f}')" class="aspect-square bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden border-2 border-transparent hover:border-violet-500"><img src="${f}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=\\'flex items-center justify-center h-full text-xs text-gray-400 p-2 break-all\\'>${f.split('/').pop()}</div>'"></button>`).join('')}
 			</div>
 		</div>
 	</div>`;
@@ -401,28 +401,40 @@ function render() {
     const visibleStudios = studios.filter(s => hasPermission(s.name));
 
     mainContent = `
-			<aside class="w-56 bg-white dark:bg-[#1a1a1a] dark:border-gray-700 border-r p-4 hidden lg:block">
-				<p class="px-2 py-1 text-xs font-semibold text-gray-400 uppercase">Studios</p>
-				<button onclick="setStudio('all')" class="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm ${currentStudio === 'all' ? 'bg-violet-50 text-violet-700 font-medium dark:bg-violet-900/30 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'}"><span class="w-1.5 h-1.5 rounded-full ${currentStudio === 'all' ? 'bg-violet-500' : 'bg-gray-300 dark:bg-gray-600'}"></span>All Studios</button>
-				${visibleStudios.map(s => `<button onclick="setStudio('${s.id}')" class="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm ${currentStudio === s.id ? 'bg-violet-50 text-violet-700 font-medium dark:bg-violet-900/30 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'}"><span class="w-1.5 h-1.5 rounded-full ${currentStudio === s.id ? 'bg-violet-500' : 'bg-gray-300 dark:bg-gray-600'}"></span>${s.name}</button>`).join('')}
-			</aside>
-			<main class="flex-1 p-6 bg-gray-50 dark:bg-[#121212] overflow-auto">
-				<div class="flex justify-between items-center mb-6">
-					<div>
-						<h1 class="text-xl font-bold text-gray-900 dark:text-white">Games</h1>
-						<p class="text-sm text-gray-500 dark:text-gray-400">${filtered.length} games</p>
-					</div>
-					<button onclick="newGame()" class="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>Add Game</button>
-				</div>
-				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">${filtered.map(GameCard).join('')}</div>
+			<main class="flex-1 p-4 lg:p-8 bg-gray-50 dark:bg-[#121212] overflow-auto">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Games Dashboard</h1>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage and monitor your game statuses</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                         <div class="relative">
+                            <select onchange="setStudio(this.value)" class="appearance-none bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 py-2.5 pl-4 pr-10 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/20">
+                                <option value="all" ${currentStudio === 'all' ? 'selected' : ''}>All Studios</option>
+                                ${visibleStudios.map(s => `<option value="${s.id}" ${currentStudio === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></div>
+                         </div>
+                         <button onclick="newGame()" class="flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 font-medium shadow-sm transition-all hover:shadow-md hover:scale-[1.02] active:scale-95"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>Add Game</button>
+                    </div>
+                </div>
+				
+                ${filtered.length > 0 ?
+        `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">${filtered.map(GameCard).join('')}</div>` :
+        `<div class="flex flex-col items-center justify-center py-20 text-center">
+                        <div class="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4"><svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">No games found</h3>
+                        <p class="text-gray-500 dark:text-gray-400 mt-1 max-w-sm">There are no games matching your current filters. Try selecting a different studio or add a new game.</p>
+                    </div>`
+      }
 			</main>`;
   } else if (currentView === 'notifications') {
     mainContent = `
-            <main class="flex-1 p-6 bg-gray-50 overflow-auto">
+            <main class="flex-1 p-6 bg-gray-50 dark:bg-[#121212] overflow-auto">
 				<div class="flex justify-between items-center mb-6">
 					<div>
-						<h1 class="text-xl font-bold text-gray-900">Announcements</h1>
-						<p class="text-sm text-gray-500">${notifications.length} total, ${activeNotifs.length} active</p>
+						<h1 class="text-xl font-bold text-gray-900 dark:text-white">Announcements</h1>
+						<p class="text-sm text-gray-500 dark:text-gray-400">${notifications.length} total, ${activeNotifs.length} active</p>
 					</div>
 					<button onclick="newNotification()" class="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>Add Announcement</button>
 				</div>
@@ -430,11 +442,11 @@ function render() {
 			</main>`;
   } else if (currentView === 'users' && currentUser?.role === 'admin') {
     mainContent = `
-            <main class="flex-1 p-6 bg-gray-50 overflow-auto">
+            <main class="flex-1 p-6 bg-gray-50 dark:bg-[#121212] overflow-auto">
                 <div class="flex justify-between items-center mb-6">
                     <div>
-                        <h1 class="text-xl font-bold text-gray-900">Users</h1>
-                        <p class="text-sm text-gray-500">Manage user access</p>
+                        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Users</h1>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Manage user access</p>
                     </div>
                     <button onclick="newUser()" class="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>Add User</button>
                 </div>
@@ -443,11 +455,11 @@ function render() {
       `;
   } else if (currentView === 'studios' && currentUser?.role === 'admin') {
     mainContent = `
-            <main class="flex-1 p-6 bg-gray-50 overflow-auto">
+            <main class="flex-1 p-6 bg-gray-50 dark:bg-[#121212] overflow-auto">
                 <div class="flex justify-between items-center mb-6">
                     <div>
-                        <h1 class="text-xl font-bold text-gray-900">Studios</h1>
-                        <p class="text-sm text-gray-500">Manage game studios</p>
+                        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Studios</h1>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Manage game studios</p>
                     </div>
                     <button onclick="newStudio()" class="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>Add Studio</button>
                 </div>
@@ -699,6 +711,30 @@ let appendMode = false;
   (window as any).closeMedia();
 };
 
+async function refreshData() {
+  // Only refresh if no editors are open to avoid overwriting user input
+  if (editingGame || editingNotification || editingUser || editingStudio) return;
+
+  try {
+    const results = await Promise.all([
+      api.get<Game[]>('/api/games'),
+      api.get<Studio[]>('/api/studios'),
+      api.get<GameNotif[]>('/api/announcements'),
+    ]);
+
+    // Simple check to see if we need to re-render (naive stringify check or just do it)
+    // Since re-rendering is cheap here, just do it.
+    if (JSON.stringify(games) !== JSON.stringify(results[0]) ||
+      JSON.stringify(studios) !== JSON.stringify(results[1]) ||
+      JSON.stringify(notifications) !== JSON.stringify(results[2])) {
+      games = results[0];
+      studios = results[1];
+      notifications = results[2];
+      render();
+    }
+  } catch (e) { console.error('Poll failed', e); }
+}
+
 // Init
 (async () => {
   try {
@@ -727,4 +763,7 @@ let appendMode = false;
     }
     document.querySelector<HTMLDivElement>('#app')!.innerHTML = `<div class="min-h-screen flex items-center justify-center"><div class="text-center"><p class="text-red-500 mb-4">Error loading panel</p><button onclick="location.reload()" class="px-4 py-2 bg-violet-600 text-white rounded-lg">Retry</button></div></div>`;
   }
+
+  // Start polling
+  setInterval(refreshData, 5000);
 })();
