@@ -324,7 +324,19 @@ export default {
                         if (idx === -1) return jsonResponse({ error: 'Not found' }, 404);
                         const updates = await request.json() as Partial<User>;
                         // Don't allow changing username easily as it's the ID
-                        users[idx] = { ...users[idx], ...updates, username: userMatch[1] };
+                        if (userMatch[1] !== updates.username && updates.username) {
+                            // Username changed: check collision, add new, remove old
+                            if (users.find(u => u.username === updates.username)) return jsonResponse({ error: 'Username already taken' }, 400);
+                            const oldUser = users[idx];
+                            users.splice(idx, 1);
+                            users.push({ ...oldUser, ...updates, username: updates.username });
+                            // Delete old legacy password if exists
+                            await env.PANEL_AUTH.delete(`user:${userMatch[1]}`);
+                            if (updates.password) await env.PANEL_AUTH.put(`user:${updates.username}`, updates.password);
+                        } else {
+                            users[idx] = { ...users[idx], ...updates, username: userMatch[1] };
+                            if (updates.password) await env.PANEL_AUTH.put(`user:${userMatch[1]}`, updates.password);
+                        }
                         await env.GAMES_DATABASE.put('users', JSON.stringify(users));
                         return jsonResponse({ ...users[idx], password: undefined });
                     }
