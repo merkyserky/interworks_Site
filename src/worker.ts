@@ -227,9 +227,9 @@ export default {
                 // Check against users DB first
                 let users = await env.GAMES_DATABASE.get('users', 'json') as User[] | null;
                 if (!users) {
-                    // Init default users if DB is empty
-                    await env.GAMES_DATABASE.put('users', JSON.stringify(DEFAULT_USERS));
+                    // Start with defaults if DB is empty
                     users = DEFAULT_USERS;
+                    await env.GAMES_DATABASE.put('users', JSON.stringify(users));
                 }
 
                 const user = users.find(u => u.username === username);
@@ -290,13 +290,19 @@ export default {
                         return jsonResponse(users.map(u => ({ ...u, password: undefined })));
                     }
                     if (pathname === '/api/users' && request.method === 'POST') {
-                        let users = await env.GAMES_DATABASE.get('users', 'json') as User[] | null || [...DEFAULT_USERS];
+                        let users = await env.GAMES_DATABASE.get('users', 'json') as User[] | null;
+                        if (!users) { users = [...DEFAULT_USERS]; } // If totally empty, seed with defaults first
+
                         const newUser = await request.json() as User;
                         if (users.find(u => u.username === newUser.username)) return jsonResponse({ error: 'User already exists' }, 400);
+
+                        // Also sync to legacy KV if it's a new user so they can login immediately if we are using fallback
+                        if (newUser.password) {
+                            await env.PANEL_AUTH.put(`user:${newUser.username}`, newUser.password);
+                        }
+
                         users.push(newUser);
                         await env.GAMES_DATABASE.put('users', JSON.stringify(users));
-                        // Also set password in legacy KV for compatibility if needed, but primarily use DB
-                        // Actually, let's just stick to the JSON DB for new users.
                         return jsonResponse({ ...newUser, password: undefined }, 201);
                     }
                     const userMatch = pathname.match(/^\/api\/users\/([^/]+)$/);
