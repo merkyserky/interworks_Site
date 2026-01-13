@@ -183,8 +183,8 @@ function StudioCard(studio: Studio): string {
   return `
     <div class="bg-white dark:bg-[#1a1a1a] dark:border-gray-700 rounded-xl border border-gray-200 p-4 relative group">
         <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-             <button onclick="editStudio('${studio.id}')" class="p-2 bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg shadow-sm border dark:border-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
-             <button onclick="deleteStudio('${studio.id}')" class="p-2 bg-red-500 text-white hover:bg-red-600 rounded-lg shadow-sm"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+             ${hasPermission(studio.name) ? `<button onclick="editStudio('${studio.id}')" class="p-2 bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg shadow-sm border dark:border-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>` : ''}
+             ${currentUser?.role === 'admin' ? `<button onclick="deleteStudio('${studio.id}')" class="p-2 bg-red-500 text-white hover:bg-red-600 rounded-lg shadow-sm"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>` : ''}
         </div>
         <div class="flex items-center gap-4 mb-4">
              <div class="w-16 h-16 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden border dark:border-gray-700">
@@ -490,7 +490,7 @@ function render() {
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">${users.map(UserCard).join('')}</div>
             </main>
       `;
-  } else if (currentView === 'studios' && currentUser?.role === 'admin') {
+  } else if (currentView === 'studios') {
     mainContent = `
             <main class="flex-1 p-6 bg-gray-50 dark:bg-[#121212] overflow-auto">
                 <div class="flex justify-between items-center mb-6">
@@ -498,7 +498,7 @@ function render() {
                         <h1 class="text-xl font-bold text-gray-900 dark:text-white">Studios</h1>
                         <p class="text-sm text-gray-500 dark:text-gray-400">Manage game studios</p>
                     </div>
-                    <button onclick="newStudio()" class="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>Add Studio</button>
+                    ${currentUser?.role === 'admin' ? `<button onclick="newStudio()" class="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>Add Studio</button>` : ''}
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">${studios.map(StudioCard).join('')}</div>
             </main>
@@ -521,10 +521,8 @@ function render() {
                     </button>
 					<button onclick="setView('games')" class="px-3 py-1.5 text-sm font-medium rounded-lg ${currentView === 'games' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}">Games</button>
 					<button onclick="setView('notifications')" class="px-3 py-1.5 text-sm font-medium rounded-lg relative ${currentView === 'notifications' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}">Announcements${activeNotifs.length > 0 ? `<span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">${activeNotifs.length}</span>` : ''}</button>
-                    ${currentUser?.role === 'admin' ?
-      `<button onclick="setView('users')" class="px-3 py-1.5 text-sm font-medium rounded-lg ${currentView === 'users' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}">Users</button>
-       <button onclick="setView('studios')" class="px-3 py-1.5 text-sm font-medium rounded-lg ${currentView === 'studios' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}">Studios</button>`
-      : ''}
+                    ${currentUser?.role === 'admin' ? `<button onclick="setView('users')" class="px-3 py-1.5 text-sm font-medium rounded-lg ${currentView === 'users' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}">Users</button>` : ''}
+                    <button onclick="setView('studios')" class="px-3 py-1.5 text-sm font-medium rounded-lg ${currentView === 'studios' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}">Studios</button>
 					<a href="/api/logout" class="ml-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">Sign out</a>
 				</div>
 			</div>
