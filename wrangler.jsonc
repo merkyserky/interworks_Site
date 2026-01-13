@@ -15,6 +15,13 @@
 		// Ensure Worker runs first for all requests
 		"run_worker_first": true
 	},
+	// KV namespace for panel authentication - edit credentials in Cloudflare Dashboard
+	"kv_namespaces": [
+		{
+			"binding": "PANEL_AUTH",
+			"id": "6dfa00f3aeb84426b2b768d39ede8145"
+		}
+	],
 	"routes": [
 		{
 			"pattern": "astralcore.ca/*",

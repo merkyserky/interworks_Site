@@ -11,6 +11,7 @@
 		"wrangler:dev": "npm run build && wrangler dev"
 	},
 	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20260113.0",
 		"@tailwindcss/vite": "^4.1.18",
 		"@types/node": "^25.0.7",
 		"tailwindcss": "^4.1.18",
