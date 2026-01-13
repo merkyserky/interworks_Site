@@ -53,13 +53,61 @@ export default function App() {
             const [gamesData, , , userData] = await Promise.all([
                 api.get<Game[]>('/api/games'),
                 api.get<Studio[]>('/api/studios'),
-                api.get<User[]>('/api/users'), // Make sure this endpoint exists or handle error
+                api.get<User[]>('/api/team'), // Make sure this endpoint exists or handle error
                 api.get<User>('/api/me').catch(() => null) // Handle unauth potentially
             ]);
             setGames(gamesData);
             setCurrentUser(userData);
         } catch (e) {
-            console.error("Failed to fetch data", e);
+            console.error("Failed to fetch data, using mock data", e);
+            // Mock data for dev/preview
+            setGames([
+                {
+                    id: '1',
+                    name: 'Interworks Hub',
+                    logo: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80',
+                    description: 'The central hub for all Interworks games and community.',
+                    ownedBy: 'Interworks Inc',
+                    status: 'playable',
+                    genres: ['Hub', 'Social'],
+                    order: 1
+                },
+                {
+                    id: '2',
+                    name: 'Tension',
+                    logo: 'https://images.unsplash.com/photo-1612287230217-127eb224097e?w=800&q=80',
+                    description: 'High-octane psychological horror experience.',
+                    ownedBy: 'Tension Studio',
+                    status: 'beta',
+                    genres: ['Horror', 'Survival'],
+                    order: 2
+                },
+                {
+                    id: '3',
+                    name: 'Project: Ascend',
+                    logo: 'https://images.unsplash.com/photo-1535905557558-afc4877a26fc?w=800&q=80',
+                    description: 'Vertical platformer with unique gravity mechanics.',
+                    ownedBy: 'Interworks Inc',
+                    status: 'in-development',
+                    genres: ['Platformer', 'Sci-Fi'],
+                    order: 3
+                },
+                {
+                    id: '4',
+                    name: 'Starlight Odyssey',
+                    logo: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80',
+                    description: 'Explore the vastness of space in this open-world RPG.',
+                    ownedBy: 'Starlight Studio',
+                    status: 'coming-soon',
+                    genres: ['RPG', 'Space'],
+                    order: 4
+                }
+            ]);
+            setCurrentUser({
+                username: 'DevUser',
+                role: 'admin',
+                allowedStudios: ['*']
+            });
         } finally {
             setLoading(false);
         }

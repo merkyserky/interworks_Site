@@ -17,6 +17,15 @@ export default defineConfig({
             '@utils': resolve(__dirname, 'src/utils'),
         },
     },
+    server: {
+        proxy: {
+            '/api': {
+                target: 'http://127.0.0.1:8787',
+                changeOrigin: true,
+                secure: false,
+            },
+        },
+    },
     build: {
         // Output to 'dist' folder for Cloudflare
         outDir: 'dist',
