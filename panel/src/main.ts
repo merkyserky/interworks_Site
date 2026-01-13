@@ -352,6 +352,14 @@ function MediaPicker(): string {
 		<div class="absolute inset-0 bg-black/50" onclick="closeMedia()"></div>
 		<div class="absolute inset-8 bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
 			<div class="px-6 py-4 border-b flex justify-between items-center"><h2 class="font-semibold">Select Media</h2><button onclick="closeMedia()" class="p-2 hover:bg-gray-100 rounded-lg">✕</button></div>
+            
+            <div class="px-6 py-4 bg-gray-50 border-b">
+                 <div class="flex gap-2">
+                     <input id="media-custom-url" placeholder="https://..." class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500">
+                     <button onclick="pickMedia(document.getElementById('media-custom-url').value)" class="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700">Use URL</button>
+                 </div>
+            </div>
+
 			<div class="flex-1 overflow-auto p-6 grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
 				${mediaFiles.map(f => `<button onclick="pickMedia('${f}')" class="aspect-square bg-gray-100 rounded-xl overflow-hidden border-2 border-transparent hover:border-violet-500"><img src="${f}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=\\'flex items-center justify-center h-full text-xs text-gray-400 p-2 break-all\\'>${f.split('/').pop()}</div>'"></button>`).join('')}
 			</div>
@@ -653,7 +661,14 @@ function render() {
 let appendMode = false;
 (window as any).openMedia = (targetId: string, append = false) => { mediaPickerTarget = targetId; appendMode = append; document.getElementById('media-picker')?.classList.remove('hidden'); };
 (window as any).closeMedia = () => { document.getElementById('media-picker')?.classList.add('hidden'); mediaPickerTarget = null; };
-(window as any).pickMedia = (url: string) => { if (mediaPickerTarget) { const el = document.getElementById(mediaPickerTarget) as HTMLInputElement; el.value = appendMode && el.value ? `${el.value}, ${url}` : url; } (window as any).closeMedia(); };
+(window as any).pickMedia = (url: string) => {
+  if (!url) return;
+  if (mediaPickerTarget) {
+    const el = document.getElementById(mediaPickerTarget) as HTMLInputElement;
+    el.value = appendMode && el.value ? `${el.value}, ${url}` : url;
+  }
+  (window as any).closeMedia();
+};
 
 // Init
 (async () => {
