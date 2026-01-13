@@ -111,8 +111,6 @@ const MEDIA_FILES = [
     '/studios/astral_Core.png', '/favicon.svg',
 ];
 
-// Session storage
-const sessions = new Map<string, { username: string; expires: number; role: string; allowedStudios: string[] }>();
 
 function generateSessionToken(): string {
     const array = new Uint8Array(32);
@@ -120,12 +118,19 @@ function generateSessionToken(): string {
     return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-function isValidSession(token: string | null): boolean {
-    if (!token) return false;
-    const session = sessions.get(token);
-    if (!session) return false;
-    if (Date.now() > session.expires) { sessions.delete(token); return false; }
-    return true;
+// Session helpers (KV-based)
+async function createSession(env: Env, username: string, role: string, allowedStudios: string[]) {
+    const token = generateSessionToken();
+    const sessionData = { username, role, allowedStudios, expires: Date.now() + 86400000 };
+    await env.PANEL_AUTH.put(`session:${token}`, JSON.stringify(sessionData), { expirationTtl: 86400 });
+    return token;
+}
+
+async function getSession(env: Env, token: string | null) {
+    if (!token) return null;
+    const session = await env.PANEL_AUTH.get(`session:${token}`, 'json') as { username: string; role: string; allowedStudios: string[]; expires: number } | null;
+    if (!session) return null;
+    return session;
 }
 
 function getSessionToken(request: Request): string | null {
@@ -216,7 +221,7 @@ export default {
         if (isPanelSubdomain) {
             const pathname = url.pathname;
             const sessionToken = getSessionToken(request);
-            const currentUser = sessionToken ? sessions.get(sessionToken) : null;
+            const currentUser = await getSession(env, sessionToken);
 
             // Login
             if (pathname === '/api/login' && request.method === 'POST') {
@@ -247,11 +252,10 @@ export default {
                 }
 
                 if (authenticated) {
-                    const token = generateSessionToken();
                     // Store minimal user info in session
                     const role = (user?.role) || 'user'; // Default to user if not in DB (shouldn't happen if we seed)
                     const allowedStudios = (user?.allowedStudios) || [];
-                    sessions.set(token, { username, expires: Date.now() + 86400000, role, allowedStudios });
+                    const token = await createSession(env, username, role, allowedStudios);
                     return new Response(null, { status: 302, headers: { 'Location': '/', 'Set-Cookie': `panel_session=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=86400` } });
                 }
                 return new Response(getLoginPageHTML('Invalid credentials'), { status: 401, headers: { 'Content-Type': 'text/html' } });
@@ -259,7 +263,7 @@ export default {
 
             // Logout
             if (pathname === '/api/logout') {
-                if (sessionToken) sessions.delete(sessionToken);
+                if (sessionToken) await env.PANEL_AUTH.delete(`session:${sessionToken}`);
                 return new Response(null, { status: 302, headers: { 'Location': '/', 'Set-Cookie': 'panel_session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0' } });
             }
 
@@ -268,7 +272,7 @@ export default {
 
             // API routes (require auth)
             if (pathname.startsWith('/api/')) {
-                if (!isValidSession(sessionToken) || !currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
+                if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
 
                 // Session/User Info
                 if (pathname === '/api/me' && request.method === 'GET') {
@@ -279,17 +283,17 @@ export default {
                     });
                 }
 
-                // Users Management (Admin only)
-                if (pathname.startsWith('/api/users')) {
+                // Users Management (Admin only) - Renamed to /api/team
+                if (pathname.startsWith('/api/team')) {
                     if (currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
 
-                    if (pathname === '/api/users' && request.method === 'GET') {
+                    if (pathname === '/api/team' && request.method === 'GET') {
                         let users = await env.GAMES_DATABASE.get('users', 'json') as User[] | null;
                         if (!users) users = DEFAULT_USERS;
                         // Don't return passwords
                         return jsonResponse(users.map(u => ({ ...u, password: undefined })));
                     }
-                    if (pathname === '/api/users' && request.method === 'POST') {
+                    if (pathname === '/api/team' && request.method === 'POST') {
                         let users = await env.GAMES_DATABASE.get('users', 'json') as User[] | null;
                         if (!users) { users = [...DEFAULT_USERS]; } // If totally empty, seed with defaults first
 
@@ -305,7 +309,7 @@ export default {
                         await env.GAMES_DATABASE.put('users', JSON.stringify(users));
                         return jsonResponse({ ...newUser, password: undefined }, 201);
                     }
-                    const userMatch = pathname.match(/^\/api\/users\/([^/]+)$/);
+                    const userMatch = pathname.match(/^\/api\/team\/([^/]+)$/);
                     if (userMatch && request.method === 'PUT') {
                         let users = await env.GAMES_DATABASE.get('users', 'json') as User[] | null || [...DEFAULT_USERS];
                         const idx = users.findIndex(u => u.username === userMatch[1]);
@@ -448,7 +452,7 @@ export default {
             }
 
             // Panel pages (require auth)
-            if (!isValidSession(sessionToken)) return new Response(getLoginPageHTML(), { headers: { 'Content-Type': 'text/html' } });
+            if (!currentUser) return new Response(getLoginPageHTML(), { headers: { 'Content-Type': 'text/html' } });
 
             if (pathname === '/' || !pathname.match(/\.[a-zA-Z0-9]+$/)) {
                 const panelIndexUrl = new URL(url); panelIndexUrl.pathname = '/panel/index.html';

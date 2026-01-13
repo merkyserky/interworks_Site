@@ -466,7 +466,7 @@ function render() {
 (window as any).newUser = () => { editingUser = { username: '', role: 'user', allowedStudios: [], password: '' }; render(); };
 (window as any).editUser = (username: string) => { editingUser = users.find(u => u.username === username) ? { ...users.find(u => u.username === username)! } : null; render(); }; // shallow copy
 (window as any).closeUserEditor = () => { editingUser = null; render(); };
-(window as any).deleteUser = async (username: string) => { if (confirm('Delete this user?')) { await api.del(`/api/users/${username}`); users = users.filter(u => u.username !== username); render(); } };
+(window as any).deleteUser = async (username: string) => { if (confirm('Delete this user?')) { await api.del(`/api/team/${username}`); users = users.filter(u => u.username !== username); render(); } };
 (window as any).toggleAllStudios = (checkbox: HTMLInputElement) => {
   document.querySelectorAll<HTMLInputElement>('input[name="us-studios"]').forEach(el => {
     if (el !== checkbox) el.checked = checkbox.checked;
@@ -502,10 +502,10 @@ function render() {
 
   try {
     if (isNew) {
-      const created = await api.post<User>('/api/users', userData);
+      const created = await api.post<User>('/api/team', userData);
       users.push(created);
     } else {
-      const updated = await api.put<User>(`/api/users/${username}`, userData);
+      const updated = await api.put<User>(`/api/team/${username}`, userData);
       const idx = users.findIndex(u => u.username === username);
       if (idx !== -1) users[idx] = updated;
     }
@@ -532,7 +532,7 @@ let appendMode = false;
       api.get<Studio[]>('/api/studios'),
       api.get<GameNotif[]>('/api/announcements'),
       api.get<string[]>('/api/media'),
-      currentUser.role === 'admin' ? api.get<User[]>('/api/users') : Promise.resolve(null)
+      currentUser.role === 'admin' ? api.get<User[]>('/api/team') : Promise.resolve(null)
     ]);
 
     games = results[0];
