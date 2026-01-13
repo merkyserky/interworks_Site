@@ -43,7 +43,11 @@ interface Game {
 interface Studio {
     id: string;
     name: string;
+    description?: string;
     logo?: string;
+    thumbnail?: string;
+    hero?: boolean;
+    media?: string[];
     discord?: string;
     roblox?: string;
     youtube?: string;
@@ -58,9 +62,9 @@ interface User {
 
 // Default data
 const DEFAULT_STUDIOS: Studio[] = [
-    { id: 'interworks', name: 'Interworks Inc', discord: 'https://discord.gg/C2wGG8KHRr', roblox: 'https://www.roblox.com/communities/34862200/Interworks-Inc#!/' },
-    { id: 'astral-core', name: 'Astral Core', logo: '/studios/astral_Core.png', discord: 'https://discord.gg/5nJgPbdTpy', roblox: 'https://www.roblox.com/communities/13408947/Astral-Core-Games#!/', youtube: 'https://www.youtube.com/@plasmix2' },
-    { id: 'gub-studs', name: 'Gub Studs' },
+    { id: 'interworks', name: 'Interworks Inc', description: 'The main studio.', discord: 'https://discord.gg/C2wGG8KHRr', roblox: 'https://www.roblox.com/communities/34862200/Interworks-Inc#!/', hero: true },
+    { id: 'astral-core', name: 'Astral Core', description: 'Creators of Unseen Floors.', logo: '/studios/astral_Core.png', discord: 'https://discord.gg/5nJgPbdTpy', roblox: 'https://www.roblox.com/communities/13408947/Astral-Core-Games#!/', youtube: 'https://www.youtube.com/@plasmix2', hero: true },
+    { id: 'gub-studs', name: 'Gub Studs', description: 'Makers of Gub Ball.' },
 ];
 
 const DEFAULT_GAMES: Game[] = [
@@ -108,7 +112,7 @@ const DEFAULT_USERS: User[] = [
 const MEDIA_FILES = [
     '/ashmoor.png', '/LogoUnseen.png', '/LogoGub.png', '/unseen_Thumbnail.png',
     '/gub_Thumbnail.png', '/astral_hero_background.png', '/interworks_hero_background.png',
-    '/studios/astral_Core.png', '/favicon.svg',
+    '/studios/astral_Core.png', '/favicon.svg', '/tension.png', '/tension_thumbnail.png'
 ];
 
 
@@ -443,6 +447,37 @@ export default {
                     let studios = await env.GAMES_DATABASE.get('studios', 'json') as Studio[] | null;
                     if (!studios) { await env.GAMES_DATABASE.put('studios', JSON.stringify(DEFAULT_STUDIOS)); studios = DEFAULT_STUDIOS; }
                     return jsonResponse(studios);
+                }
+                if (pathname === '/api/studios' && request.method === 'POST') {
+                    if (currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
+                    let studios = await env.GAMES_DATABASE.get('studios', 'json') as Studio[] | null;
+                    if (!studios) studios = [...DEFAULT_STUDIOS];
+
+                    const newStudio = await request.json() as Studio;
+                    if (studios.find(s => s.id === newStudio.id)) return jsonResponse({ error: 'ID already exists' }, 400);
+
+                    studios.push(newStudio);
+                    await env.GAMES_DATABASE.put('studios', JSON.stringify(studios));
+                    return jsonResponse(newStudio, 201);
+                }
+                const studioMatch = pathname.match(/^\/api\/studios\/([^/]+)$/);
+                if (studioMatch && request.method === 'PUT') {
+                    if (currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
+                    let studios = await env.GAMES_DATABASE.get('studios', 'json') as Studio[] | null || [...DEFAULT_STUDIOS];
+                    const idx = studios.findIndex(s => s.id === studioMatch[1]);
+                    if (idx === -1) return jsonResponse({ error: 'Not found' }, 404);
+
+                    const updated = await request.json() as Partial<Studio>;
+                    studios[idx] = { ...studios[idx], ...updated, id: studioMatch[1] };
+                    await env.GAMES_DATABASE.put('studios', JSON.stringify(studios));
+                    return jsonResponse(studios[idx]);
+                }
+                if (studioMatch && request.method === 'DELETE') {
+                    if (currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
+                    let studios = await env.GAMES_DATABASE.get('studios', 'json') as Studio[] | null || [...DEFAULT_STUDIOS];
+                    studios = studios.filter(s => s.id !== studioMatch[1]);
+                    await env.GAMES_DATABASE.put('studios', JSON.stringify(studios));
+                    return jsonResponse({ success: true });
                 }
 
                 // Media
