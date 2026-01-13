@@ -11,17 +11,7 @@ import { onDOMReady } from '@utils/dom'
 interface SpotifyAlbum { name: string; spotifyId: string; }
 interface GameNotification { id: string; gameId: string; title: string; description: string; countdownTo?: string; youtubeVideoId?: string; link?: string; active: boolean; }
 interface Game { id: string; name: string; logo: string; description: string; ownedBy: string; status: 'coming-soon' | 'playable' | 'beta' | 'in-development'; genres: string[]; youtubeVideoId?: string; thumbnails?: string[]; spotifyAlbums?: SpotifyAlbum[]; link?: string; }
-
-// Carousel items
-const CAROUSEL_ITEMS: CarouselItem[] = [
-    { logo: { type: 'text', value: 'INTERWORKS INC' }, heroBackground: '/interworks_hero_background.png', title: 'INTERWORKS INC', description: 'Owned by EggCow' },
-    { logo: { type: 'image', value: '/studios/astral_Core.png', alt: 'Astral Core' }, heroBackground: '/astral_hero_background.png', title: 'ASTRAL CORE', description: 'Astral Core is a roblox development studio owned by plasmix2 and wafflynutria116.' },
-]
-
-const STUDIO_SOCIALS = [
-    { studioName: 'Interworks Inc', discord: 'https://discord.gg/C2wGG8KHRr', roblox: 'https://www.roblox.com/communities/34862200/Interworks-Inc#!/' },
-    { studioName: 'Astral Core', studioLogo: '/studios/astral_Core.png', discord: 'https://discord.gg/5nJgPbdTpy', roblox: 'https://www.roblox.com/communities/13408947/Astral-Core-Games#!/', youtube: 'https://www.youtube.com/@plasmix2' },
-]
+interface Studio { id: string; name: string; description?: string; logo?: string; thumbnail?: string; hero?: boolean; media?: string[]; discord?: string; roblox?: string; youtube?: string; }
 
 const SITE_CONFIG = {
     company: { name: 'ASTRAL CORE + INTERWORKS INC', displayName: 'Astral Core + Interworks Inc' },
@@ -37,6 +27,7 @@ function convertGame(game: Game) {
 // State
 let notifications: GameNotification[] = []
 let games: Game[] = []
+let studios: Studio[] = []
 let notificationModalOpen = false
 let countdownInterval: number | null = null
 
@@ -269,23 +260,49 @@ export async function initApp(): Promise<void> {
 
     // Fetch data
     try {
-        const [gamesRes, notifsRes] = await Promise.all([
+        const [gamesRes, notifsRes, studiosRes] = await Promise.all([
             fetch('/api/games').then(r => r.json()),
-            fetch('/api/announcements').then(r => r.json())
+            fetch('/api/announcements').then(r => r.json()),
+            fetch('/api/studios').then(r => r.json())
         ])
         games = gamesRes as Game[]
         notifications = notifsRes as GameNotification[]
-    } catch (e) { console.error('Failed to fetch:', e); games = []; notifications = [] }
+        studios = studiosRes as Studio[]
+    } catch (e) { console.error('Failed to fetch:', e); games = []; notifications = []; studios = [] }
 
-    initCarousel({ items: CAROUSEL_ITEMS, interval: 5000 })
-    createSocialModal({ studios: STUDIO_SOCIALS })
+    // Build Carousel Items from Studios
+    const carouselItems: CarouselItem[] = studios
+        .filter(s => s.hero)
+        .map(s => ({
+            logo: s.logo ? { type: 'image', value: s.logo, alt: s.name } : { type: 'text', value: s.name.toUpperCase() },
+            heroBackground: s.thumbnail || (s.media && s.media.length > 0 ? s.media[0] : '/placeholder_hero.png'), // Fallback if no thumbnail
+            title: s.name.toUpperCase(),
+            description: s.description || ''
+        }))
 
-    const header = createHeader({ carouselItems: CAROUSEL_ITEMS, navLinks: SITE_CONFIG.navigation })
+    // Default fallback if no studios found/hero enabled
+    if (carouselItems.length === 0) {
+        carouselItems.push({ logo: { type: 'text', value: 'INTERWORKS INC' }, heroBackground: '/interworks_hero_background.png', title: 'INTERWORKS INC', description: 'Owned by EggCow' })
+    }
+
+    // Build Studio Socials
+    const studioSocials = studios.map(s => ({
+        studioName: s.name,
+        studioLogo: s.logo,
+        discord: s.discord,
+        roblox: s.roblox,
+        youtube: s.youtube
+    }))
+
+    initCarousel({ items: carouselItems, interval: 5000 })
+    createSocialModal({ studios: studioSocials })
+
+    const header = createHeader({ carouselItems: carouselItems, navLinks: SITE_CONFIG.navigation })
     const navContainer = header.querySelector('nav > div:last-child')
     if (navContainer) navContainer.appendChild(createNotificationButton())
     app.appendChild(header)
 
-    const hero = createHero({ carouselItems: CAROUSEL_ITEMS, ctaText: SITE_CONFIG.hero.ctaText, ctaHref: SITE_CONFIG.hero.ctaHref })
+    const hero = createHero({ carouselItems: carouselItems, ctaText: SITE_CONFIG.hero.ctaText, ctaHref: SITE_CONFIG.hero.ctaHref })
     // Inject hero countdown widget into hero content
     const heroContent = hero.querySelector('.max-w-7xl')
     if (heroContent) {
