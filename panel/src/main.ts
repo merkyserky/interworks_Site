@@ -91,23 +91,44 @@ const hasPermission = (studioName: string) => {
 // Components
 function GameCard(game: Game): string {
   const canEdit = hasPermission(game.ownedBy);
+  const statusBadge: Record<string, { bg: string; text: string }> = {
+    'playable': { bg: 'bg-green-500', text: 'Live' },
+    'coming-soon': { bg: 'bg-amber-500', text: 'Soon' },
+    'beta': { bg: 'bg-blue-500', text: 'Beta' },
+    'in-development': { bg: 'bg-purple-500', text: 'Dev' }
+  };
+  const badge = statusBadge[game.status] || { bg: 'bg-gray-500', text: game.status };
+
   return `
-	<div class="bg-white dark:bg-[#1a1a1a] dark:border-gray-700 rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all group">
-		<div class="aspect-video bg-gray-100 dark:bg-gray-800 relative">
-			<img src="${game.logo}" alt="${game.name}" class="w-full h-full object-cover" onerror="this.style.display='none'">
-			<div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2">
-				${canEdit ? `
-				<button onclick="editGame('${game.id}')" class="opacity-0 group-hover:opacity-100 bg-white dark:bg-gray-700 dark:text-white rounded-full p-3 shadow-lg hover:bg-gray-50 dark:hover:bg-gray-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
-				<button onclick="deleteGame('${game.id}')" class="opacity-0 group-hover:opacity-100 bg-red-500 rounded-full p-3 shadow-lg hover:bg-red-600"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
-				` : '<span class="opacity-0 group-hover:opacity-100 bg-black/50 text-white px-3 py-1 rounded-full text-xs">Read Only</span>'}
+	<div class="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer" onclick="editGame('${game.id}')">
+		<div class="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 relative overflow-hidden">
+			<img src="${game.logo}" alt="${game.name}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.style.display='none'">
+			<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+			<div class="absolute top-3 right-3">
+				<span class="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg ${badge.bg} text-white shadow-lg">${badge.text}</span>
 			</div>
+			${canEdit ? `
+			<div class="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+				<button onclick="event.stopPropagation(); editGame('${game.id}')" class="p-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur rounded-lg shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors">
+					<svg class="w-4 h-4 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+				</button>
+				<button onclick="event.stopPropagation(); deleteGame('${game.id}')" class="p-2 bg-red-500/90 backdrop-blur rounded-lg shadow-lg hover:bg-red-600 transition-colors">
+					<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+				</button>
+			</div>
+			` : ''}
 		</div>
 		<div class="p-4">
-			<h3 class="font-semibold text-gray-900 dark:text-white truncate">${game.name}</h3>
-			<p class="text-sm text-gray-500 dark:text-gray-400 mb-2">${game.ownedBy}</p>
-			<div class="flex flex-wrap gap-1.5">
-				<span class="px-2 py-0.5 text-xs font-medium rounded-full ${statusColors[game.status] || 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'}">${statusLabels[game.status] || game.status}</span>
-				${game.genres.slice(0, 2).map(g => `<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">${g}</span>`).join('')}
+			<div class="flex items-start justify-between gap-2 mb-2">
+				<h3 class="font-bold text-gray-900 dark:text-white truncate">${game.name}</h3>
+				${game.visible !== false ? '' : '<span class="flex-shrink-0 text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded">Hidden</span>'}
+			</div>
+			<p class="text-xs text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1">
+				<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+				${game.ownedBy}
+			</p>
+			<div class="flex flex-wrap gap-1">
+				${game.genres.slice(0, 2).map(g => `<span class="px-2 py-0.5 text-[10px] font-medium rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">${g}</span>`).join('')}
 			</div>
 		</div>
 	</div>`;
@@ -397,110 +418,142 @@ function render() {
   let mainContent = '';
 
   if (currentView === 'games') {
-    // Filter studios sidebar based on permissions
     const visibleStudios = studios.filter(s => hasPermission(s.name));
+    const playableCount = filtered.filter(g => g.status === 'playable').length;
+    const devCount = filtered.filter(g => g.status === 'in-development' || g.status === 'beta').length;
 
     mainContent = `
-			<!-- Sidebar for Desktop -->
-            <aside class="w-64 bg-white dark:bg-[#1a1a1a] dark:border-gray-700 border-r hidden lg:flex flex-col">
-                <div class="p-4 border-b dark:border-gray-700">
-                    <h2 class="font-semibold text-gray-900 dark:text-white uppercase text-xs tracking-wider">Explorer</h2>
-                </div>
-                <div class="flex-1 overflow-y-auto p-2 space-y-1">
-                    <button onclick="setStudio('all')" class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${currentStudio === 'all' ? 'bg-violet-50 text-violet-700 font-medium dark:bg-violet-900/30 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800'}">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-                        All Games
-                    </button>
-                    ${visibleStudios.map(s => {
-      const studioGames = games.filter(g => g.ownedBy === s.name);
-      return `
-                        <details class="group" ${currentStudio === s.id ? 'open' : ''}>
-                            <summary class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer select-none text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800" onclick="setStudio('${s.id}')">
-                                <svg class="w-4 h-4 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                <span class="${currentStudio === s.id ? 'text-violet-600 dark:text-violet-400 font-medium' : ''}">${s.name}</span>
-                            </summary>
-                            <div class="pl-9 mt-1 space-y-0.5">
-                                ${studioGames.map(g => `
-                                    <button onclick="editGame('${g.id}')" class="w-full text-left px-2 py-1.5 rounded text-xs text-gray-500 hover:text-violet-600 hover:bg-violet-50 dark:text-gray-500 dark:hover:text-violet-300 dark:hover:bg-violet-900/20 truncate transition-colors flex items-center gap-2">
-                                        <div class="w-1.5 h-1.5 rounded-full ${statusColors[g.status]?.includes('green') ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}"></div>
-                                        ${g.name}
-                                    </button>
-                                `).join('')}
-                                <button onclick="newGame()" class="w-full text-left px-2 py-1.5 rounded text-xs text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 italic flex items-center gap-2">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                    Add Game
-                                </button>
-                            </div>
-                        </details>
-                        `;
-    }).join('')}
-                </div>
-            </aside>
-            
-			<main class="flex-1 p-4 lg:p-8 bg-gray-50 dark:bg-[#121212] overflow-auto">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+			<main class="flex-1 p-6 lg:p-8 bg-gray-50 dark:bg-[#0a0a0a] overflow-auto">
+				<!-- Stats Row -->
+				<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+					<div class="bg-white dark:bg-[#1a1a1a] rounded-2xl p-5 border border-gray-100 dark:border-gray-800">
+						<div class="flex items-center gap-3">
+							<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+								<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+							</div>
+							<div>
+								<p class="text-2xl font-bold text-gray-900 dark:text-white">${filtered.length}</p>
+								<p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Games</p>
+							</div>
+						</div>
+					</div>
+					<div class="bg-white dark:bg-[#1a1a1a] rounded-2xl p-5 border border-gray-100 dark:border-gray-800">
+						<div class="flex items-center gap-3">
+							<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+								<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+							</div>
+							<div>
+								<p class="text-2xl font-bold text-gray-900 dark:text-white">${playableCount}</p>
+								<p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Playable</p>
+							</div>
+						</div>
+					</div>
+					<div class="bg-white dark:bg-[#1a1a1a] rounded-2xl p-5 border border-gray-100 dark:border-gray-800">
+						<div class="flex items-center gap-3">
+							<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+								<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+							</div>
+							<div>
+								<p class="text-2xl font-bold text-gray-900 dark:text-white">${devCount}</p>
+								<p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">In Progress</p>
+							</div>
+						</div>
+					</div>
+					<div class="bg-white dark:bg-[#1a1a1a] rounded-2xl p-5 border border-gray-100 dark:border-gray-800">
+						<div class="flex items-center gap-3">
+							<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
+								<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+							</div>
+							<div>
+								<p class="text-2xl font-bold text-gray-900 dark:text-white">${visibleStudios.length}</p>
+								<p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Studios</p>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Header with filters -->
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Games Dashboard</h1>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage and monitor your game statuses</p>
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Games</h1>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Manage your game collection</p>
                     </div>
-                    <div class="flex items-center gap-3">
-                         <!-- Mobile Dropdown only -->
-                         <div class="relative lg:hidden">
-                            <select onchange="setStudio(this.value)" class="appearance-none bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 py-2.5 pl-4 pr-10 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-violet-500/20">
-                                <option value="all" ${currentStudio === 'all' ? 'selected' : ''}>All Studios</option>
-                                ${visibleStudios.map(s => `<option value="${s.id}" ${currentStudio === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></div>
-                         </div>
-                         <button onclick="newGame()" class="flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 font-medium shadow-sm transition-all hover:shadow-md hover:scale-[1.02] active:scale-95"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>Add Game</button>
-                    </div>
+                    <button onclick="newGame()" class="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl hover:from-violet-500 hover:to-purple-500 font-semibold shadow-lg shadow-violet-500/25 transition-all hover:shadow-xl hover:shadow-violet-500/30 hover:-translate-y-0.5">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                        New Game
+                    </button>
                 </div>
+
+				<!-- Studio Filter Tabs -->
+				<div class="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+					<button onclick="setStudio('all')" class="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all ${currentStudio === 'all' ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/25' : 'bg-white dark:bg-[#1a1a1a] text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-violet-300 dark:hover:border-violet-700'}">
+						All Studios
+					</button>
+					${visibleStudios.map(s => `
+						<button onclick="setStudio('${s.id}')" class="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${currentStudio === s.id ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/25' : 'bg-white dark:bg-[#1a1a1a] text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-violet-300 dark:hover:border-violet-700'}">
+							${s.logo ? `<img src="${s.logo}" class="w-5 h-5 rounded object-cover">` : ''}
+							${s.name}
+						</button>
+					`).join('')}
+				</div>
 				
                 ${filtered.length > 0 ?
-        `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">${filtered.map(GameCard).join('')}</div>` :
-        `<div class="flex flex-col items-center justify-center py-20 text-center">
-                        <div class="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4"><svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">No games found</h3>
-                        <p class="text-gray-500 dark:text-gray-400 mt-1 max-w-sm">There are no games matching your current filters. Try selecting a different studio or add a new game.</p>
+        `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">${filtered.map(GameCard).join('')}</div>` :
+        `<div class="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-gray-800">
+                        <div class="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-4">
+                            <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">No games yet</h3>
+                        <p class="text-gray-500 dark:text-gray-400 mt-1 max-w-sm">Get started by creating your first game.</p>
+                        <button onclick="newGame()" class="mt-4 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 text-sm font-medium">Create Game</button>
                     </div>`
       }
 			</main>`;
   } else if (currentView === 'notifications') {
     mainContent = `
-            <main class="flex-1 p-6 bg-gray-50 dark:bg-[#121212] overflow-auto">
-				<div class="flex justify-between items-center mb-6">
+            <main class="flex-1 p-6 lg:p-8 bg-gray-50 dark:bg-[#0a0a0a] overflow-auto">
+				<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
 					<div>
-						<h1 class="text-xl font-bold text-gray-900 dark:text-white">Announcements</h1>
-						<p class="text-sm text-gray-500 dark:text-gray-400">${notifications.length} total, ${activeNotifs.length} active</p>
+						<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Announcements</h1>
+						<p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">${notifications.length} total · ${activeNotifs.length} active</p>
 					</div>
-					<button onclick="newNotification()" class="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>Add Announcement</button>
+					<button onclick="newNotification()" class="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl hover:from-violet-500 hover:to-purple-500 font-semibold shadow-lg shadow-violet-500/25 transition-all hover:shadow-xl hover:shadow-violet-500/30 hover:-translate-y-0.5">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+						New Announcement
+					</button>
 				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">${notifications.map(NotificationCard).join('')}</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">${notifications.map(NotificationCard).join('')}</div>
 			</main>`;
   } else if (currentView === 'users' && currentUser?.role === 'admin') {
     mainContent = `
-            <main class="flex-1 p-6 bg-gray-50 dark:bg-[#121212] overflow-auto">
-                <div class="flex justify-between items-center mb-6">
+            <main class="flex-1 p-6 lg:p-8 bg-gray-50 dark:bg-[#0a0a0a] overflow-auto">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
                     <div>
-                        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Users</h1>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Manage user access</p>
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Team Members</h1>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">${users.length} users with panel access</p>
                     </div>
-                    <button onclick="newUser()" class="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>Add User</button>
+                    <button onclick="newUser()" class="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl hover:from-violet-500 hover:to-purple-500 font-semibold shadow-lg shadow-violet-500/25 transition-all hover:shadow-xl hover:shadow-violet-500/30 hover:-translate-y-0.5">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+						Add User
+					</button>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">${users.map(UserCard).join('')}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">${users.map(UserCard).join('')}</div>
             </main>
       `;
   } else if (currentView === 'studios') {
     mainContent = `
-            <main class="flex-1 p-6 bg-gray-50 dark:bg-[#121212] overflow-auto">
-                <div class="flex justify-between items-center mb-6">
+            <main class="flex-1 p-6 lg:p-8 bg-gray-50 dark:bg-[#0a0a0a] overflow-auto">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
                     <div>
-                        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Studios</h1>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Manage game studios</p>
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Studios</h1>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">${studios.length} registered studios</p>
                     </div>
-                    ${currentUser?.role === 'admin' ? `<button onclick="newStudio()" class="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>Add Studio</button>` : ''}
+                    ${currentUser?.role === 'admin' ? `<button onclick="newStudio()" class="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl hover:from-violet-500 hover:to-purple-500 font-semibold shadow-lg shadow-violet-500/25 transition-all hover:shadow-xl hover:shadow-violet-500/30 hover:-translate-y-0.5">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+						Add Studio
+					</button>` : ''}
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">${studios.map(StudioCard).join('')}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">${studios.map(StudioCard).join('')}</div>
             </main>
       `;
   }
