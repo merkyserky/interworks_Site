@@ -10,14 +10,14 @@ import { onDOMReady } from '@utils/dom'
 // Types matching API
 interface SpotifyAlbum { name: string; spotifyId: string; }
 interface GameNotification { id: string; gameId: string; title: string; description: string; countdownTo?: string; youtubeVideoId?: string; link?: string; active: boolean; }
-interface Game { id: string; name: string; logo: string; description: string; ownedBy: string; status: 'coming-soon' | 'playable' | 'beta' | 'in-development'; genres: string[]; youtubeVideoId?: string; thumbnails?: string[]; spotifyAlbums?: SpotifyAlbum[]; link?: string; }
+interface Game { id: string; name: string; logo: string; description: string; ownedBy: string; status: 'coming-soon' | 'playable' | 'beta' | 'in-development'; genres: string[]; youtubeVideoId?: string; thumbnails?: string[]; spotifyAlbums?: SpotifyAlbum[]; link?: string; order?: number; visible?: boolean; }
 interface Studio { id: string; name: string; description?: string; logo?: string; thumbnail?: string; hero?: boolean; media?: string[]; discord?: string; roblox?: string; youtube?: string; }
 
+// Modifying CONFIG to support new modals
 const SITE_CONFIG = {
     company: { name: 'ASTRAL CORE + INTERWORKS INC', displayName: 'Astral Core + Interworks Inc' },
-    navigation: [{ label: 'Games', href: '#games' }],
-    hero: { ctaText: 'View Games', ctaHref: '#games' },
-    games: { heading: 'Games', subheading: 'Explore our upcoming games' },
+    // Removed specific links, handled by click events now
+    hero: { ctaText: 'View Games', ctaHref: '#' },
 } as const
 
 function convertGame(game: Game) {
@@ -29,6 +29,8 @@ let notifications: GameNotification[] = []
 let games: Game[] = []
 let studios: Studio[] = []
 let notificationModalOpen = false
+let studiosModalOpen = false
+let gamesModalOpen = false
 let countdownInterval: number | null = null
 
 // Format countdown
@@ -175,6 +177,115 @@ function createNotificationModal(): HTMLElement {
     return modal
 }
 
+// STUDIOS MODAL
+function createStudiosModal(): HTMLElement {
+    const modal = document.createElement('div')
+    modal.id = 'studios-modal'
+    modal.className = 'fixed inset-0 z-[100] hidden flex items-center justify-center p-4'
+    // Modified content: Center-aligned list of studios
+    const studiosList = studios.map(s => `
+        <div class="group bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-4 transition-all hover:scale-[1.02] cursor-pointer" onclick="window.openSocials('${s.name}')">
+            <div class="w-16 h-16 rounded-lg bg-black/40 mb-3 overflow-hidden flex items-center justify-center mx-auto shadow-lg">
+                ${s.logo
+            ? `<img src="${s.logo}" class="w-full h-full object-cover">`
+            : `<span class="text-2xl font-bold text-gray-400 select-none">${s.name.charAt(0)}</span>`
+        }
+            </div>
+            <h3 class="text-white font-semibold text-center truncate px-2">${s.name}</h3>
+            ${s.description ? `<p class="text-xs text-gray-400 text-center mt-1 line-clamp-2 px-2">${s.description}</p>` : ''}
+        </div>
+    `).join('')
+
+    modal.innerHTML = `
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="window.closeStudiosModal()"></div>
+        <div class="relative w-full max-w-4xl bg-[#121212] rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-fade-in-up">
+            <div class="px-8 py-6 border-b border-white/10 flex items-center justify-between bg-white/5">
+                <div>
+                    <h2 class="text-2xl font-bold text-white tracking-tight">Studios</h2>
+                    <p class="text-gray-400 text-sm">Our creative teams</p>
+                </div>
+                <button onclick="window.closeStudiosModal()" class="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                ${studiosList.length ? studiosList : '<p class="text-gray-500 text-center col-span-full py-12">No studios found</p>'}
+            </div>
+        </div>
+    `
+    return modal
+}
+
+// GAMES MODAL (Replaces scroll-to-games usage)
+function createGamesModal(): HTMLElement {
+    const modal = document.createElement('div')
+    modal.id = 'games-modal'
+    modal.className = 'fixed inset-0 z-[100] hidden flex items-center justify-center p-4'
+
+    // Filter by visible flag only for MAIN SITE display
+    // Sort by order
+    const visibleGames = games
+        .filter(g => g.visible !== false)
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+
+    // Re-use existing game card logic from components but wrap nicely for modal
+    // Actually we can reconstruct a simple card here or re-use createGamesSection logic partially?
+    // Let's create specific modal cards for consistency.
+    const gamesList = visibleGames.map(g => `
+        <div class="relative group bg-[#1e1e1e] border border-white/10 rounded-2xl overflow-hidden hover:border-violet-500/50 transition-all hover:shadow-2xl hover:shadow-violet-900/20">
+             <div class="aspect-video relative overflow-hidden bg-black/50">
+                 ${g.thumbnails && g.thumbnails.length > 0
+            ? `<img src="${g.thumbnails[0]}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">`
+            : g.logo
+                ? `<img src="${g.logo}" class="w-full h-full object-cover blur-sm opacity-50"><img src="${g.logo}" class="absolute inset-0 w-2/3 h-2/3 m-auto object-contain z-10">`
+                : `<div class="w-full h-full flex items-center justify-center text-gray-600">No Image</div>`
+        }
+                 <div class="absolute inset-0 bg-gradient-to-t from-[#1e1e1e] to-transparent opacity-60"></div>
+                 <div class="absolute top-2 right-2 flex gap-1">
+                    ${g.status ? `<span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider bg-white/10 backdrop-blur text-white border border-white/10">${g.status}</span>` : ''}
+                 </div>
+             </div>
+             <div class="p-5">
+                 <div class="flex items-center gap-3 mb-3">
+                    ${g.logo ? `<img src="${g.logo}" class="w-10 h-10 rounded-lg object-contain bg-black/30 p-1 border border-white/5">` : ''}
+                    <div>
+                        <h3 class="text-lg font-bold text-white leading-none group-hover:text-violet-400 transition-colors">${g.name}</h3>
+                        <p class="text-xs text-gray-500 mt-1 uppercase tracking-widest font-semibold">${g.ownedBy}</p>
+                    </div>
+                 </div>
+                 <p class="text-sm text-gray-400 line-clamp-3 mb-4 h-15">${g.description}</p>
+                 <div class="flex flex-wrap gap-2 mb-4">
+                     ${g.genres.slice(0, 3).map(gen => `<span class="text-[10px] px-2 py-1 bg-white/5 rounded text-gray-300 border border-white/5">${gen}</span>`).join('')}
+                 </div>
+                 <!-- Note: Game Links could be added here similar to index page, but let's keep it clean or add a 'View Details' if we had a detail page. 
+                      For now, if there is a 'link', maybe a Play button? -->
+                 ${g.link ? `<a href="${g.link}" target="_blank" class="block w-full text-center py-2 bg-white/5 hover:bg-violet-600 text-gray-300 hover:text-white rounded-lg transition-colors text-sm font-semibold border border-white/5 hover:border-violet-500">Play Now</a>` : ''}
+             </div>
+        </div>
+    `).join('')
+
+    modal.innerHTML = `
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="window.closeGamesModal()"></div>
+        <div class="relative w-full max-w-6xl h-[85vh] bg-[#121212] rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-fade-in-up">
+             <div class="px-8 py-6 border-b border-white/10 flex items-center justify-between bg-white/5 shrink-0">
+                <div>
+                    <h2 class="text-2xl font-bold text-white tracking-tight">All Games</h2>
+                    <p class="text-gray-400 text-sm">Explore our universe</p>
+                </div>
+                <button onclick="window.closeGamesModal()" class="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-8 overflow-y-auto custom-scrollbar flex-1">
+                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${gamesList.length ? gamesList : '<p class="text-gray-500 text-center col-span-full py-12">No games visible currently.</p>'}
+                 </div>
+            </div>
+        </div>
+    `
+    return modal
+}
+
 // Render notifications in modal with game info
 function renderNotifications() {
     const list = document.getElementById('notification-list')
@@ -238,6 +349,28 @@ function toggleNotificationModal() {
     }
 }
 
+// TOGGLE HANDLERS FOR NEW MODALS
+; (window as any).toggleStudiosModal = () => {
+    studiosModalOpen = !studiosModalOpen
+    const modal = document.getElementById('studios-modal')
+    if (modal) {
+        if (studiosModalOpen) modal.classList.remove('hidden')
+        else modal.classList.add('hidden')
+    }
+}
+    ; (window as any).closeStudiosModal = () => { studiosModalOpen = false; document.getElementById('studios-modal')?.classList.add('hidden') }
+
+    ; (window as any).toggleGamesModal = () => {
+        gamesModalOpen = !gamesModalOpen
+        const modal = document.getElementById('games-modal')
+        if (modal) {
+            if (gamesModalOpen) modal.classList.remove('hidden')
+            else modal.classList.add('hidden')
+        }
+    }
+    ; (window as any).closeGamesModal = () => { gamesModalOpen = false; document.getElementById('games-modal')?.classList.add('hidden') }
+
+
 function updateNotificationBadge() {
     const badge = document.getElementById('notification-badge')
     const activeNotifs = notifications.filter(n => n.active)
@@ -297,12 +430,41 @@ export async function initApp(): Promise<void> {
     initCarousel({ items: carouselItems, interval: 5000 })
     createSocialModal({ studios: studioSocials })
 
-    const header = createHeader({ carouselItems: carouselItems, navLinks: SITE_CONFIG.navigation })
+    // Manually create header because we want custom Buttons with custom actions, not just Href links
+    // createHeader from shared components might be rigid if it only takes navLinks with hrefs.
+    // However, I can pass href="javascript:toggleGamesModal()" if CSP allows or just attach listeners later.
+    // Cleaner way: Use the standard createHeader but hijack the links.
+
+    // UPDATED Navigation Links
+    const NAV_LINKS = [
+        { label: 'GAMES', href: '#' }, // Will intercept
+        { label: 'STUDIOS', href: '#' }, // Will intercept
+    ]
+
+    const header = createHeader({ carouselItems: carouselItems, navLinks: NAV_LINKS })
     const navContainer = header.querySelector('nav > div:last-child')
     if (navContainer) navContainer.appendChild(createNotificationButton())
+
+    // Intercept clicks on GAMES and STUDIOS
+    const links = header.querySelectorAll('nav a')
+    links.forEach(link => {
+        if (link.textContent?.trim() === 'GAMES') {
+            link.addEventListener('click', (e) => { e.preventDefault(); (window as any).toggleGamesModal(); })
+        }
+        if (link.textContent?.trim() === 'STUDIOS') {
+            link.addEventListener('click', (e) => { e.preventDefault(); (window as any).toggleStudiosModal(); })
+        }
+    })
+
     app.appendChild(header)
 
     const hero = createHero({ carouselItems: carouselItems, ctaText: SITE_CONFIG.hero.ctaText, ctaHref: SITE_CONFIG.hero.ctaHref })
+    // Hijack Hero CTA as well
+    const heroBtn = hero.querySelector('a')
+    if (heroBtn) {
+        heroBtn.addEventListener('click', (e) => { e.preventDefault(); (window as any).toggleGamesModal(); })
+    }
+
     // Inject hero countdown widget into hero content
     const heroContent = hero.querySelector('.max-w-7xl')
     if (heroContent) {
@@ -311,9 +473,20 @@ export async function initApp(): Promise<void> {
     app.appendChild(hero)
 
     app.appendChild(createHeroFooter({ companyName: SITE_CONFIG.company.displayName, year: 2026 }))
-    app.appendChild(createGamesSection({ heading: SITE_CONFIG.games.heading, subheading: SITE_CONFIG.games.subheading, games: games.map(convertGame) }))
+
+    // SECTION: Games List (Filtered and Sorted)
+    // Even though user wants a modal, having a section on page is standard. I'll update it to respect visibility/order.
+    const visibleGames = games
+        .filter(g => g.visible !== false)
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+
+    app.appendChild(createGamesSection({ heading: SITE_CONFIG.games.heading, subheading: SITE_CONFIG.games.subheading, games: visibleGames.map(convertGame) }))
     app.appendChild(createPageFooter({ companyName: SITE_CONFIG.company.displayName, year: 2026 }))
+
+    // Append Modals
     app.appendChild(createNotificationModal())
+    app.appendChild(createStudiosModal())
+    app.appendChild(createGamesModal())
 
     updateNotificationBadge()
     updateHeroCountdown()

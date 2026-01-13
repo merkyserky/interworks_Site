@@ -3,7 +3,7 @@
 
 interface SpotifyAlbum { name: string; spotifyId: string; }
 interface GameNotif { id: string; gameId: string; title: string; description: string; countdownTo: string; youtubeVideoId?: string; link?: string; active: boolean; }
-interface Game { id: string; name: string; logo: string; description: string; ownedBy: string; status: 'coming-soon' | 'playable' | 'beta' | 'in-development'; genres: string[]; youtubeVideoId?: string; thumbnails?: string[]; spotifyAlbums?: SpotifyAlbum[]; link?: string; }
+interface Game { id: string; name: string; logo: string; description: string; ownedBy: string; status: 'coming-soon' | 'playable' | 'beta' | 'in-development'; genres: string[]; youtubeVideoId?: string; thumbnails?: string[]; spotifyAlbums?: SpotifyAlbum[]; link?: string; order?: number; visible?: boolean; }
 interface Studio { id: string; name: string; description?: string; logo?: string; thumbnail?: string; hero?: boolean; media?: string[]; discord?: string; roblox?: string; youtube?: string; }
 interface User { username: string; role: 'admin' | 'user'; allowedStudios: string[]; password?: string; } // Password optional in frontend type
 
@@ -208,6 +208,10 @@ function GameEditor(game: Game | null): string {
 				<div class="grid grid-cols-2 gap-4">
 					<div><label class="block text-sm font-medium text-gray-700 mb-1">YouTube Video ID</label><input id="ed-youtube" value="${game.youtubeVideoId || ''}" placeholder="dQw4w9WgXcQ" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500"></div>
 					<div><label class="block text-sm font-medium text-gray-700 mb-1">Game Link</label><input id="ed-link" value="${game.link || ''}" placeholder="https://roblox.com/games/..." class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500"></div>
+				</div>
+                <div class="grid grid-cols-2 gap-4">
+					<div><label class="block text-sm font-medium text-gray-700 mb-1">Sort Order (Lower = First)</label><input type="number" id="ed-order" value="${game.order ?? 0}" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500"></div>
+					<div class="flex items-center mt-6"><label class="flex items-center gap-2"><input type="checkbox" id="ed-visible" ${game.visible !== false ? 'checked' : ''} class="w-4 h-4 text-violet-600 rounded"><span class="text-sm font-medium text-gray-700">Visible on Main Site</span></label></div>
 				</div>
 				<div><label class="block text-sm font-medium text-gray-700 mb-1">Spotify Albums (JSON array)</label><textarea id="ed-spotify" rows="2" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500 resize-none font-mono text-sm">${JSON.stringify(game.spotifyAlbums || [])}</textarea><p class="text-xs text-gray-400 mt-1">[{"name":"OST","spotifyId":"abc123"}]</p></div>
 			</div>
@@ -487,6 +491,8 @@ function render() {
     youtubeVideoId: getValue('ed-youtube') || undefined,
     link: getValue('ed-link') || undefined,
     spotifyAlbums: (() => { try { return JSON.parse(getValue('ed-spotify') || '[]'); } catch { return []; } })(),
+    order: parseInt(getValue('ed-order')) || 0,
+    visible: (document.getElementById('ed-visible') as HTMLInputElement)?.checked || false
   };
 
   // Validate required fields

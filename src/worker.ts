@@ -38,6 +38,8 @@ interface Game {
     thumbnails?: string[];
     spotifyAlbums?: SpotifyAlbum[];
     link?: string;
+    order?: number;
+    visible?: boolean;
 }
 
 interface Studio {
@@ -204,6 +206,8 @@ function migrateGame(game: any): Game {
         delete game.genre;
     }
     if (!game.genres) game.genres = [];
+    if (typeof game.visible === 'undefined') game.visible = true;
+    if (typeof game.order === 'undefined') game.order = 0;
     return game as Game;
 }
 
