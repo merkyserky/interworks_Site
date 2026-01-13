@@ -15,15 +15,22 @@ export default defineConfig({
         },
     },
     build: {
-        // Output to 'dist' folder for Cloudflare Pages
+        // Output to 'dist' folder for Cloudflare
         outDir: 'dist',
         emptyOutDir: true,
         sourcemap: false,
         minify: 'terser',
         rollupOptions: {
+            input: {
+                // Main site entry point
+                main: resolve(__dirname, 'index.html'),
+                // Panel subdomain entry point
+                panel: resolve(__dirname, 'panel/index.html'),
+            },
             output: {
                 manualChunks: undefined,
             },
         },
     },
 })
+

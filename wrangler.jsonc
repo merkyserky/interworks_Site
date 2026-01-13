@@ -5,11 +5,24 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "interworksdevs",
+	"main": "src/worker.ts",
 	"compatibility_date": "2025-09-27",
 	"assets": {
-		// Cloudflare Pages will serve files from the Vite build output
-		"directory": "./dist"
+		// Cloudflare will serve static files from the Vite build output
+		"directory": "./dist",
+		// Let Worker handle routing instead of auto-serving
+		"binding": "ASSETS"
 	},
+	"routes": [
+		{
+			"pattern": "astralcore.ca/*",
+			"zone_name": "astralcore.ca"
+		},
+		{
+			"pattern": "panel.astralcore.ca/*",
+			"zone_name": "astralcore.ca"
+		}
+	],
 	"observability": {
 		"enabled": true
 	}
