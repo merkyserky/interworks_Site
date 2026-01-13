@@ -484,8 +484,26 @@ export default {
                     if (idx === -1) return jsonResponse({ error: 'Not found' }, 404);
 
                     const updated = await request.json() as Partial<Studio>;
+                    const oldName = studios[idx].name;
                     studios[idx] = { ...studios[idx], ...updated, id: studioMatch[1] };
                     await env.GAMES_DATABASE.put('studios', JSON.stringify(studios));
+
+                    // Cascade name change to games if name changed
+                    if (updated.name && updated.name !== oldName) {
+                        let games = (await env.GAMES_DATABASE.get('games', 'json') as any[] || DEFAULT_GAMES).map(migrateGame);
+                        let gamesChanged = false;
+                        games = games.map(g => {
+                            if (g.ownedBy === oldName) {
+                                gamesChanged = true;
+                                return { ...g, ownedBy: updated.name! };
+                            }
+                            return g;
+                        });
+                        if (gamesChanged) {
+                            await env.GAMES_DATABASE.put('games', JSON.stringify(games));
+                        }
+                    }
+
                     return jsonResponse(studios[idx]);
                 }
                 if (studioMatch && request.method === 'DELETE') {
