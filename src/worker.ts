@@ -10,7 +10,8 @@ export interface Env {
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
         const url = new URL(request.url);
-        const hostname = url.hostname;
+        // Use Host header for accurate hostname detection (works in production)
+        const hostname = request.headers.get('host') || url.hostname;
 
         // Check if this is the panel subdomain
         const isPanelSubdomain = hostname.startsWith('panel.');
