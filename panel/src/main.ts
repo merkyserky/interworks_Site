@@ -523,7 +523,53 @@ function render() {
 					<button onclick="setView('notifications')" class="px-3 py-1.5 text-sm font-medium rounded-lg relative ${currentView === 'notifications' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}">Announcements${activeNotifs.length > 0 ? `<span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">${activeNotifs.length}</span>` : ''}</button>
                     ${currentUser?.role === 'admin' ? `<button onclick="setView('users')" class="px-3 py-1.5 text-sm font-medium rounded-lg ${currentView === 'users' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}">Users</button>` : ''}
                     <button onclick="setView('studios')" class="px-3 py-1.5 text-sm font-medium rounded-lg ${currentView === 'studios' ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'}">Studios</button>
-					<a href="/api/logout" class="ml-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">Sign out</a>
+					
+					<!-- User Profile Dropdown -->
+					<div class="relative ml-2" id="profile-dropdown-container">
+						<button onclick="toggleProfileDropdown(event)" class="flex items-center gap-2 px-2 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl transition-all">
+							<div class="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+								${currentUser?.username?.charAt(0).toUpperCase() || 'U'}
+							</div>
+							<span class="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block">${currentUser?.username || 'User'}</span>
+							<svg id="profile-chevron" class="w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/></svg>
+						</button>
+						
+						<div id="profile-dropdown-menu" class="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden opacity-0 invisible translate-y-2 transition-all duration-200 z-50">
+							<!-- User info -->
+							<div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+								<p class="text-sm font-semibold text-gray-900 dark:text-white">${currentUser?.username || 'User'}</p>
+								<p class="text-xs text-gray-500 dark:text-gray-400 capitalize">${currentUser?.role || 'user'} Account</p>
+							</div>
+							
+							<!-- Menu items -->
+							<div class="py-1">
+								<a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+									<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/></svg>
+									<span>Profile</span>
+								</a>
+								<a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+									<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+									<span>Settings</span>
+								</a>
+								<a href="#" onclick="setView('studios'); closeProfileDropdown();" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+									<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+									<span>Your Studios</span>
+								</a>
+								<a href="#" onclick="setView('games'); closeProfileDropdown();" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+									<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="2"/></svg>
+									<span>Your Games</span>
+								</a>
+							</div>
+							
+							<!-- Sign out -->
+							<div class="border-t border-gray-100 dark:border-gray-700 py-1">
+								<a href="/api/logout" class="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+									<span>Sign Out</span>
+								</a>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 		</header>
@@ -543,6 +589,42 @@ function render() {
 (window as any).toggleTheme = toggleTheme;
 (window as any).setView = (v: 'games' | 'notifications' | 'users' | 'studios') => { currentView = v; render(); };
 (window as any).setStudio = (id: string) => { currentStudio = id; render(); };
+
+// Profile dropdown functions
+let profileDropdownOpen = false;
+(window as any).toggleProfileDropdown = (e: Event) => {
+  e.stopPropagation();
+  profileDropdownOpen = !profileDropdownOpen;
+  const menu = document.getElementById('profile-dropdown-menu');
+  const chevron = document.getElementById('profile-chevron');
+  if (menu && chevron) {
+    if (profileDropdownOpen) {
+      menu.classList.remove('opacity-0', 'invisible', 'translate-y-2');
+      menu.classList.add('opacity-100', 'visible', 'translate-y-0');
+      chevron.classList.add('rotate-180');
+    } else {
+      menu.classList.add('opacity-0', 'invisible', 'translate-y-2');
+      menu.classList.remove('opacity-100', 'visible', 'translate-y-0');
+      chevron.classList.remove('rotate-180');
+    }
+  }
+};
+(window as any).closeProfileDropdown = () => {
+  profileDropdownOpen = false;
+  const menu = document.getElementById('profile-dropdown-menu');
+  const chevron = document.getElementById('profile-chevron');
+  if (menu && chevron) {
+    menu.classList.add('opacity-0', 'invisible', 'translate-y-2');
+    menu.classList.remove('opacity-100', 'visible', 'translate-y-0');
+    chevron.classList.remove('rotate-180');
+  }
+};
+// Close dropdown when clicking outside
+document.addEventListener('click', () => {
+  if (profileDropdownOpen) {
+    (window as any).closeProfileDropdown();
+  }
+});
 
 (window as any).newGame = () => {
   // Default studio to first allowed studio
