@@ -29,6 +29,9 @@
             "@/*": [
                 "src/*"
             ],
+            "@panel/*": [
+                "panel/src/*"
+            ],
             "@components/*": [
                 "src/components/*"
             ],
@@ -38,9 +41,11 @@
             "@utils/*": [
                 "src/utils/*"
             ]
-        }
+        },
+        "jsx": "react-jsx"
     },
     "include": [
-        "src"
+        "src",
+        "panel/src"
     ]
 }
