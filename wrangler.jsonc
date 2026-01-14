@@ -24,6 +24,11 @@
 		{
 			"binding": "GAMES_DATABASE",
 			"id": "b4bcd6cac2794648821b7642e6d0b213"
+		},
+		{
+			// Analytics KV - Create this in Cloudflare Dashboard and update the ID
+			"binding": "ANALYTICS_DATA",
+			"id": "ebe0d03c342042b6b6bbc038610d3af2"
 		}
 	],
 	"routes": [

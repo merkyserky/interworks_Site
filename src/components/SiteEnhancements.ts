@@ -146,74 +146,31 @@ export function createGameCardSkeleton(): HTMLElement {
 
 /**
  * Share Buttons Component
- * Social sharing for games
+ * Now opens a modal for better sharing experience
  */
-export function createShareButtons(game: { name: string; link?: string; description?: string }): HTMLElement {
+export function createShareButtons(game: { id?: string; name: string; link?: string; description?: string; logo?: string; thumbnails?: readonly string[] }): HTMLElement {
     const container = document.createElement('div');
     container.className = 'flex items-center gap-2';
 
-    const url = game.link || window.location.href;
-    const text = `Check out ${game.name}! ${game.description || ''}`.slice(0, 200);
-
-    const shareLinks = [
-        {
-            name: 'Twitter',
-            icon: `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`,
-            url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
-            color: 'bg-black hover:bg-zinc-800'
-        },
-        {
-            name: 'Discord',
-            icon: `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037 13.486 13.486 0 00-.594 1.226c-2.176-.328-4.352-.328-6.505 0a13.482 13.482 0 00-.602-1.226.075.075 0 00-.079-.037A19.736 19.736 0 002.66 4.37a.072.072 0 00-.03.047C.612 10.976 1.765 17.58 4.295 21.054a.077.077 0 00.088.026 19.988 19.988 0 006.014-3.03.076.076 0 00.038-.052z"/></svg>`,
-            url: '#', // Discord doesn't have direct share
-            color: 'bg-[#5865F2] hover:bg-[#4752C4]',
-            copyText: true
-        },
-        {
-            name: 'Copy Link',
-            icon: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>`,
-            url: '#',
-            color: 'bg-white/10 hover:bg-white/20',
-            copy: true
-        }
-    ];
-
-    container.innerHTML = `
-        <span class="text-xs text-gray-500 mr-1">Share:</span>
-        ${shareLinks.map(link => `
-            <button 
-                class="p-2 ${link.color} rounded-lg transition-all hover:scale-110 text-white" 
-                title="Share on ${link.name}"
-                data-share="${link.name.toLowerCase()}"
-                data-url="${link.url}"
-                ${link.copy ? 'data-copy="true"' : ''}
-            >
-                ${link.icon}
-            </button>
-        `).join('')}
+    const shareBtn = document.createElement('button');
+    shareBtn.className = 'flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-medium rounded-lg transition-all hover:scale-105 border border-white/10';
+    shareBtn.innerHTML = `
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+        </svg>
+        <span>Share</span>
     `;
 
-    // Add click handlers
-    setTimeout(() => {
-        container.querySelectorAll('button').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const shareUrl = btn.getAttribute('data-url');
-                const isCopy = btn.getAttribute('data-copy');
+    shareBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Open share modal
+        if ((window as any).openShareModal) {
+            (window as any).openShareModal({ game });
+        }
+    };
 
-                if (isCopy) {
-                    navigator.clipboard.writeText(url);
-                    btn.innerHTML = `<svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
-                    setTimeout(() => {
-                        btn.innerHTML = shareLinks.find(l => l.name === 'Copy Link')?.icon || '';
-                    }, 2000);
-                } else if (shareUrl && shareUrl !== '#') {
-                    window.open(shareUrl, '_blank', 'width=600,height=400');
-                }
-            });
-        });
-    }, 100);
-
+    container.appendChild(shareBtn);
     return container;
 }
 

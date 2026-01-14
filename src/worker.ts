@@ -7,6 +7,7 @@ export interface Env {
     ASSETS: { fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response> };
     PANEL_AUTH: KVNamespace;
     GAMES_DATABASE: KVNamespace;
+    ANALYTICS_DATA: KVNamespace; // For analytics tracking
 }
 
 // Interfaces
@@ -83,6 +84,25 @@ interface User {
     password?: string; // For internal storage, not API response
     role: 'admin' | 'user';
     allowedStudios: string[]; // List of studio names or IDs, or ['*'] for all
+}
+
+// Analytics interfaces
+interface AnalyticsEvent {
+    type: 'pageview' | 'game_click' | 'share' | 'play_click';
+    gameId?: string;
+    gameName?: string;
+    timestamp: number;
+    referrer?: string;
+    userAgent?: string;
+}
+
+interface DailyAnalytics {
+    date: string; // YYYY-MM-DD
+    pageViews: number;
+    uniqueVisitors: string[]; // IP hashes
+    gameClicks: Record<string, number>; // gameId -> count
+    shares: Record<string, number>; // gameId -> count
+    playClicks: Record<string, number>; // gameId -> count
 }
 
 // Default data
@@ -327,13 +347,141 @@ function migrateGame(game: any): Game {
     if (typeof game.order === 'undefined') game.order = 0;
     return game as Game;
 }
-
 // Helper to check user permission for a studio
 function hasStudioPermission(user: { role: string; allowedStudios: string[] }, studioName: string): boolean {
     if (user.role === 'admin') return true;
     if (user.allowedStudios.includes('*')) return true;
     return user.allowedStudios.includes(studioName);
 }
+
+// Analytics helpers
+function getDateKey(date: Date = new Date()): string {
+    return date.toISOString().split('T')[0]; // YYYY-MM-DD
+}
+
+async function hashIP(ip: string): Promise<string> {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(ip + 'analytics-salt-v1');
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.slice(0, 8).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function recordAnalyticsEvent(
+    env: Env,
+    event: AnalyticsEvent,
+    request: Request
+): Promise<void> {
+    const dateKey = getDateKey();
+    const analyticsKey = `analytics:${dateKey}`;
+
+    let dayData = await env.ANALYTICS_DATA.get(analyticsKey, 'json') as DailyAnalytics | null;
+    if (!dayData) {
+        dayData = {
+            date: dateKey,
+            pageViews: 0,
+            uniqueVisitors: [],
+            gameClicks: {},
+            shares: {},
+            playClicks: {}
+        };
+    }
+
+    // Get visitor hash for unique tracking
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    const visitorHash = await hashIP(ip);
+
+    switch (event.type) {
+        case 'pageview':
+            dayData.pageViews++;
+            if (!dayData.uniqueVisitors.includes(visitorHash)) {
+                dayData.uniqueVisitors.push(visitorHash);
+            }
+            break;
+        case 'game_click':
+            if (event.gameId) {
+                dayData.gameClicks[event.gameId] = (dayData.gameClicks[event.gameId] || 0) + 1;
+            }
+            break;
+        case 'share':
+            if (event.gameId) {
+                dayData.shares[event.gameId] = (dayData.shares[event.gameId] || 0) + 1;
+            }
+            break;
+        case 'play_click':
+            if (event.gameId) {
+                dayData.playClicks[event.gameId] = (dayData.playClicks[event.gameId] || 0) + 1;
+            }
+            break;
+    }
+
+    // Store with 90 day expiry
+    await env.ANALYTICS_DATA.put(analyticsKey, JSON.stringify(dayData), { expirationTtl: 60 * 60 * 24 * 90 });
+}
+
+async function getAnalytics(env: Env, days: number = 7): Promise<{
+    summary: { pageViews: number; uniqueVisitors: number; gameClicks: number; shares: number };
+    daily: { date: string; pageViews: number; uniqueVisitors: number }[];
+    topGames: { gameId: string; views: number; clicks: number; shares: number }[];
+}> {
+    const daily: { date: string; pageViews: number; uniqueVisitors: number }[] = [];
+    const gameStats: Record<string, { views: number; clicks: number; shares: number }> = {};
+    let totalPageViews = 0;
+    const allVisitors = new Set<string>();
+    let totalGameClicks = 0;
+    let totalShares = 0;
+
+    for (let i = 0; i < days; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateKey = getDateKey(date);
+        const analyticsKey = `analytics:${dateKey}`;
+
+        const dayData = await env.ANALYTICS_DATA.get(analyticsKey, 'json') as DailyAnalytics | null;
+        if (dayData) {
+            daily.unshift({
+                date: dateKey,
+                pageViews: dayData.pageViews,
+                uniqueVisitors: dayData.uniqueVisitors.length
+            });
+
+            totalPageViews += dayData.pageViews;
+            dayData.uniqueVisitors.forEach(v => allVisitors.add(v));
+
+            // Aggregate game stats
+            for (const [gameId, clicks] of Object.entries(dayData.gameClicks)) {
+                if (!gameStats[gameId]) gameStats[gameId] = { views: 0, clicks: 0, shares: 0 };
+                gameStats[gameId].clicks += clicks;
+                totalGameClicks += clicks;
+            }
+            for (const [gameId, shares] of Object.entries(dayData.shares)) {
+                if (!gameStats[gameId]) gameStats[gameId] = { views: 0, clicks: 0, shares: 0 };
+                gameStats[gameId].shares += shares;
+                totalShares += shares;
+            }
+        } else {
+            daily.unshift({ date: dateKey, pageViews: 0, uniqueVisitors: 0 });
+        }
+    }
+
+    // Sort games by total activity
+    const topGames = Object.entries(gameStats)
+        .map(([gameId, stats]) => ({ gameId, ...stats }))
+        .sort((a, b) => (b.clicks + b.shares) - (a.clicks + a.shares))
+        .slice(0, 10);
+
+    return {
+        summary: {
+            pageViews: totalPageViews,
+            uniqueVisitors: allVisitors.size,
+            gameClicks: totalGameClicks,
+            shares: totalShares
+        },
+        daily,
+        topGames
+    };
+}
+
 
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
@@ -654,6 +802,25 @@ export default {
                 // Media
                 if (pathname === '/api/media') return jsonResponse(MEDIA_FILES);
 
+                // Analytics (Admin only)
+                if (pathname === '/api/analytics' && request.method === 'GET') {
+                    if (currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
+                    const days = parseInt(url.searchParams.get('days') || '7');
+                    const analytics = await getAnalytics(env, Math.min(days, 90)); // Max 90 days
+
+                    // Enrich with game names
+                    let games = await env.GAMES_DATABASE.get('games', 'json') as Game[] | null || DEFAULT_GAMES;
+                    const enrichedTopGames = analytics.topGames.map(g => {
+                        const game = games!.find(gm => gm.id === g.gameId);
+                        return { ...g, name: game?.name || g.gameId };
+                    });
+
+                    return jsonResponse({
+                        ...analytics,
+                        topGames: enrichedTopGames
+                    });
+                }
+
                 return jsonResponse({ error: 'Not found' }, 404);
             }
 
@@ -688,6 +855,30 @@ export default {
             let studios = await env.GAMES_DATABASE.get('studios', 'json') as Studio[] | null;
             if (!studios) studios = DEFAULT_STUDIOS;
             return jsonResponse(studios);
+        }
+
+        // Public analytics tracking endpoint (accepts POST with minimal data)
+        if (url.pathname === '/api/track' && request.method === 'POST') {
+            try {
+                const body = await request.json() as {
+                    type: 'pageview' | 'game_click' | 'share' | 'play_click';
+                    gameId?: string;
+                    gameName?: string;
+                };
+
+                await recordAnalyticsEvent(env, {
+                    type: body.type,
+                    gameId: body.gameId,
+                    gameName: body.gameName,
+                    timestamp: Date.now(),
+                    referrer: request.headers.get('Referer') || undefined,
+                    userAgent: request.headers.get('User-Agent') || undefined
+                }, request);
+
+                return jsonResponse({ success: true });
+            } catch {
+                return jsonResponse({ error: 'Invalid request' }, 400);
+            }
         }
 
         // Serve static files

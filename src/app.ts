@@ -8,6 +8,8 @@ import { initCarousel, type CarouselItem } from '@utils/carousel'
 import { onDOMReady } from '@utils/dom'
 import { createCookieConsent, createLoadingSkeleton, hideLoadingSkeleton, enableViewTransitions } from '@components/SiteEnhancements'
 import '@components/GameDetailModal' // Register global handlers
+import '@components/ShareModal' // Register share modal handlers
+import { trackEvent } from '@components/ShareModal'
 
 // Types matching API
 interface SpotifyAlbum { name: string; spotifyId: string; }
@@ -588,6 +590,9 @@ export async function initApp(): Promise<void> {
 
     // Hide loading skeleton after content is ready
     setTimeout(() => hideLoadingSkeleton(), 300)
+
+    // Track page view for analytics
+    trackEvent('pageview')
 
     console.log("ASTRAL CORE + INTERWORKS INC - Site Loaded")
 }

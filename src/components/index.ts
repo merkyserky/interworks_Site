@@ -9,4 +9,4 @@ export * from './Footer'
 export * from './SocialModal'
 export * from './SiteEnhancements'
 export * from './GameDetailModal'
-
+export * from './ShareModal'
