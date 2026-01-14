@@ -535,6 +535,14 @@ function createGameCard(game: Game): HTMLElement {
             </svg>
             <span>Play</span>
         `
+        // Track play click for analytics
+        playBtn.onclick = () => {
+            fetch('/api/track', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'play_click', gameId: game.id, gameName: game.name })
+            }).catch(() => { })
+        }
         buttonsRow.appendChild(playBtn)
     }
 
@@ -559,6 +567,12 @@ function createGameCard(game: Game): HTMLElement {
     detailsBtn.onclick = (e) => {
         e.preventDefault()
         e.stopPropagation()
+        // Track game click for analytics
+        fetch('/api/track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'game_click', gameId: game.id, gameName: game.name })
+        }).catch(() => { })
         // Open game detail modal
         if ((window as any).openGameDetail) {
             (window as any).openGameDetail(game)

@@ -105,6 +105,18 @@ interface DailyAnalytics {
     playClicks: Record<string, number>; // gameId -> count
 }
 
+// Activity Log interface
+interface ActivityLogEntry {
+    id: string;
+    type: 'create' | 'update' | 'delete';
+    entityType: 'game' | 'studio' | 'announcement' | 'user';
+    entityId: string;
+    entityName: string;
+    user: string;
+    timestamp: number;
+    details?: string;
+}
+
 // Default data
 const DEFAULT_STUDIOS: Studio[] = [
     { id: 'interworks', name: 'Interworks Inc', description: 'The main studio.', discord: 'https://discord.gg/C2wGG8KHRr', roblox: 'https://www.roblox.com/communities/34862200/Interworks-Inc#!/', hero: true },
@@ -482,6 +494,49 @@ async function getAnalytics(env: Env, days: number = 7): Promise<{
     };
 }
 
+// Activity log helpers
+async function logActivity(
+    env: Env,
+    entry: Omit<ActivityLogEntry, 'id' | 'timestamp'>
+): Promise<void> {
+    const activityKey = 'activity_log';
+    let logs = await env.GAMES_DATABASE.get(activityKey, 'json') as ActivityLogEntry[] | null || [];
+
+    const newEntry: ActivityLogEntry = {
+        ...entry,
+        id: `act-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        timestamp: Date.now()
+    };
+
+    // Add to front (newest first), keep only last 500 entries
+    logs.unshift(newEntry);
+    if (logs.length > 500) {
+        logs = logs.slice(0, 500);
+    }
+
+    await env.GAMES_DATABASE.put(activityKey, JSON.stringify(logs));
+}
+
+async function getActivityLog(
+    env: Env,
+    filters?: { type?: string; entityType?: string; limit?: number }
+): Promise<ActivityLogEntry[]> {
+    const activityKey = 'activity_log';
+    let logs = await env.GAMES_DATABASE.get(activityKey, 'json') as ActivityLogEntry[] | null || [];
+
+    // Apply filters
+    if (filters?.type) {
+        logs = logs.filter(l => l.type === filters.type);
+    }
+    if (filters?.entityType) {
+        logs = logs.filter(l => l.entityType === filters.entityType);
+    }
+
+    // Limit results
+    const limit = filters?.limit || 100;
+    return logs.slice(0, limit);
+}
+
 
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
@@ -580,6 +635,16 @@ export default {
 
                         users.push(newUser);
                         await env.GAMES_DATABASE.put('users', JSON.stringify(users));
+
+                        // Log activity
+                        await logActivity(env, {
+                            type: 'create',
+                            entityType: 'user',
+                            entityId: newUser.username,
+                            entityName: newUser.username,
+                            user: currentUser.username
+                        });
+
                         return jsonResponse({ ...newUser, password: undefined }, 201);
                     }
                     const userMatch = pathname.match(/^\/api\/team\/([^/]+)$/);
@@ -603,6 +668,16 @@ export default {
                             if (updates.password) await env.PANEL_AUTH.put(`user:${userMatch[1]}`, updates.password);
                         }
                         await env.GAMES_DATABASE.put('users', JSON.stringify(users));
+
+                        // Log activity
+                        await logActivity(env, {
+                            type: 'update',
+                            entityType: 'user',
+                            entityId: updates.username || userMatch[1],
+                            entityName: updates.username || userMatch[1],
+                            user: currentUser.username
+                        });
+
                         return jsonResponse({ ...users[idx], password: undefined });
                     }
                     if (userMatch && request.method === 'DELETE') {
@@ -610,6 +685,16 @@ export default {
                         let users = await env.GAMES_DATABASE.get('users', 'json') as User[] | null || [...DEFAULT_USERS];
                         users = users.filter(u => u.username !== userMatch[1]);
                         await env.GAMES_DATABASE.put('users', JSON.stringify(users));
+
+                        // Log activity
+                        await logActivity(env, {
+                            type: 'delete',
+                            entityType: 'user',
+                            entityId: userMatch[1],
+                            entityName: userMatch[1],
+                            user: currentUser.username
+                        });
+
                         return jsonResponse({ success: true });
                     }
                 }
@@ -639,6 +724,16 @@ export default {
 
                     games[idx] = { ...games[idx], ...updated, id: gameMatch[1] };
                     await env.GAMES_DATABASE.put('games', JSON.stringify(games));
+
+                    // Log activity
+                    await logActivity(env, {
+                        type: 'update',
+                        entityType: 'game',
+                        entityId: gameMatch[1],
+                        entityName: games[idx].name,
+                        user: currentUser.username
+                    });
+
                     return jsonResponse(games[idx]);
                 }
                 if (pathname === '/api/games' && request.method === 'POST') {
@@ -651,6 +746,16 @@ export default {
                     newGame.id = newGame.id || `game-${Date.now()}`;
                     games.push(newGame);
                     await env.GAMES_DATABASE.put('games', JSON.stringify(games));
+
+                    // Log activity
+                    await logActivity(env, {
+                        type: 'create',
+                        entityType: 'game',
+                        entityId: newGame.id,
+                        entityName: newGame.name,
+                        user: currentUser.username
+                    });
+
                     return jsonResponse(newGame, 201);
                 }
                 if (gameMatch && request.method === 'DELETE') {
@@ -658,10 +763,22 @@ export default {
                     if (currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden: Only admins can delete games' }, 403);
 
                     let games = (await env.GAMES_DATABASE.get('games', 'json') as any[] || [...DEFAULT_GAMES]).map(migrateGame);
+                    const deletedGame = games.find(g => g.id === gameMatch[1]);
                     games = games.filter(g => g.id !== gameMatch[1]);
                     await env.GAMES_DATABASE.put('games', JSON.stringify(games));
+
+                    // Log activity
+                    await logActivity(env, {
+                        type: 'delete',
+                        entityType: 'game',
+                        entityId: gameMatch[1],
+                        entityName: deletedGame?.name || gameMatch[1],
+                        user: currentUser.username
+                    });
+
                     return jsonResponse({ success: true });
                 }
+
 
                 // Notifications CRUD
                 if (pathname === '/api/announcements' && request.method === 'GET') {
@@ -681,6 +798,16 @@ export default {
                     newNotif.id = newNotif.id || `notif-${Date.now()}`;
                     notifications.push(newNotif);
                     await env.GAMES_DATABASE.put('notifications', JSON.stringify(notifications));
+
+                    // Log activity
+                    await logActivity(env, {
+                        type: 'create',
+                        entityType: 'announcement',
+                        entityId: newNotif.id,
+                        entityName: newNotif.title,
+                        user: currentUser.username
+                    });
+
                     return jsonResponse(newNotif, 201);
                 }
                 const notifMatch = pathname.match(/^\/api\/announcements\/([^/]+)$/);
@@ -703,6 +830,16 @@ export default {
 
                     notifications[idx] = { ...notifications[idx], ...updated, id: notifMatch[1] };
                     await env.GAMES_DATABASE.put('notifications', JSON.stringify(notifications));
+
+                    // Log activity
+                    await logActivity(env, {
+                        type: 'update',
+                        entityType: 'announcement',
+                        entityId: notifMatch[1],
+                        entityName: notifications[idx].title,
+                        user: currentUser.username
+                    });
+
                     return jsonResponse(notifications[idx]);
                 }
                 if (notifMatch && request.method === 'DELETE') {
@@ -716,8 +853,19 @@ export default {
                         if (game && !hasStudioPermission(currentUser, game.ownedBy)) return jsonResponse({ error: 'Forbidden' }, 403);
                     }
 
+                    const deletedNotif = notifications.find(n => n.id === notifMatch[1]);
                     notifications = notifications.filter(n => n.id !== notifMatch[1]);
                     await env.GAMES_DATABASE.put('notifications', JSON.stringify(notifications));
+
+                    // Log activity
+                    await logActivity(env, {
+                        type: 'delete',
+                        entityType: 'announcement',
+                        entityId: notifMatch[1],
+                        entityName: deletedNotif?.title || notifMatch[1],
+                        user: currentUser.username
+                    });
+
                     return jsonResponse({ success: true });
                 }
 
@@ -737,6 +885,16 @@ export default {
 
                     studios.push(newStudio);
                     await env.GAMES_DATABASE.put('studios', JSON.stringify(studios));
+
+                    // Log activity
+                    await logActivity(env, {
+                        type: 'create',
+                        entityType: 'studio',
+                        entityId: newStudio.id,
+                        entityName: newStudio.name,
+                        user: currentUser.username
+                    });
+
                     return jsonResponse(newStudio, 201);
                 }
                 const studioMatch = pathname.match(/^\/api\/studios\/([^/]+)$/);
@@ -788,14 +946,33 @@ export default {
                             }
                         }
                     }
+                    // Log activity
+                    await logActivity(env, {
+                        type: 'update',
+                        entityType: 'studio',
+                        entityId: studioMatch[1],
+                        entityName: studios[idx].name,
+                        user: currentUser.username
+                    });
 
                     return jsonResponse(studios[idx]);
                 }
                 if (studioMatch && request.method === 'DELETE') {
                     if (currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
                     let studios = await env.GAMES_DATABASE.get('studios', 'json') as Studio[] | null || [...DEFAULT_STUDIOS];
+                    const deletedStudio = studios.find(s => s.id === studioMatch[1]);
                     studios = studios.filter(s => s.id !== studioMatch[1]);
                     await env.GAMES_DATABASE.put('studios', JSON.stringify(studios));
+
+                    // Log activity
+                    await logActivity(env, {
+                        type: 'delete',
+                        entityType: 'studio',
+                        entityId: studioMatch[1],
+                        entityName: deletedStudio?.name || studioMatch[1],
+                        user: currentUser.username
+                    });
+
                     return jsonResponse({ success: true });
                 }
 
@@ -819,6 +996,17 @@ export default {
                         ...analytics,
                         topGames: enrichedTopGames
                     });
+                }
+
+                // Activity Log (Admin only)
+                if (pathname === '/api/activity' && request.method === 'GET') {
+                    if (currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
+                    const type = url.searchParams.get('type') || undefined;
+                    const entityType = url.searchParams.get('entityType') || undefined;
+                    const limit = parseInt(url.searchParams.get('limit') || '100');
+
+                    const logs = await getActivityLog(env, { type, entityType, limit: Math.min(limit, 500) });
+                    return jsonResponse(logs);
                 }
 
                 return jsonResponse({ error: 'Not found' }, 404);
