@@ -6,6 +6,8 @@
 import { createHeader, createHero, createGamesSection, createHeroFooter, createPageFooter, createSocialModal } from '@components/index'
 import { initCarousel, type CarouselItem } from '@utils/carousel'
 import { onDOMReady } from '@utils/dom'
+import { createCookieConsent, createLoadingSkeleton, hideLoadingSkeleton, enableViewTransitions } from '@components/SiteEnhancements'
+import '@components/GameDetailModal' // Register global handlers
 
 // Types matching API
 interface SpotifyAlbum { name: string; spotifyId: string; }
@@ -577,11 +579,25 @@ export async function initApp(): Promise<void> {
     app.appendChild(createStudiosModal())
     app.appendChild(createGamesModal())
 
+    // Cookie Consent
+    app.appendChild(createCookieConsent())
+
     updateNotificationBadge()
     updateHeroCountdown()
     startCountdownTicker() // Start live updates
 
+    // Hide loading skeleton after content is ready
+    setTimeout(() => hideLoadingSkeleton(), 300)
+
     console.log("ASTRAL CORE + INTERWORKS INC - Site Loaded")
 }
 
-onDOMReady(initApp)
+// Show loading skeleton immediately
+onDOMReady(() => {
+    const app = document.getElementById('app')
+    if (app) {
+        app.appendChild(createLoadingSkeleton())
+    }
+    enableViewTransitions()
+    initApp()
+})

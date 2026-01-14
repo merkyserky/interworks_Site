@@ -510,6 +510,10 @@ function createGameCard(game: Game): HTMLElement {
         infoContainer.appendChild(metaRow)
     }
 
+    // Action buttons row
+    const buttonsRow = document.createElement('div')
+    buttonsRow.className = 'flex flex-wrap items-center gap-3'
+
     // Play button
     if (game.link) {
         const playBtn = document.createElement('a')
@@ -531,8 +535,38 @@ function createGameCard(game: Game): HTMLElement {
             </svg>
             <span>Play</span>
         `
-        infoContainer.appendChild(playBtn)
+        buttonsRow.appendChild(playBtn)
     }
+
+    // More Details button
+    const detailsBtn = document.createElement('button')
+    detailsBtn.className = `
+        inline-flex items-center justify-center gap-1.5 px-4 py-2.5
+        bg-white/10 text-white font-semibold
+        text-xs tracking-wide uppercase
+        rounded-lg border border-white/20
+        hover:bg-white/20 hover:scale-105 active:scale-95
+        transition-all duration-200
+    `.trim().replace(/\s+/g, ' ')
+    detailsBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 16v-4"/>
+            <path d="M12 8h.01"/>
+        </svg>
+        <span>More Details</span>
+    `
+    detailsBtn.onclick = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        // Open game detail modal
+        if ((window as any).openGameDetail) {
+            (window as any).openGameDetail(game)
+        }
+    }
+    buttonsRow.appendChild(detailsBtn)
+
+    infoContainer.appendChild(buttonsRow)
 
     contentOverlay.appendChild(infoContainer)
 

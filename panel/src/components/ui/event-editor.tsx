@@ -8,6 +8,8 @@ import { Textarea } from './textarea'
 import { Toggle, Checkbox } from './checkbox'
 import { cn } from '@panel/lib/utils'
 import { GameEvent, EventIcon } from '@panel/lib/api'
+import { PrioritySelector } from './number-input'
+import { CalendarModal } from './calendar-modal'
 
 const EVENT_COLORS = [
     '#ef4444', '#f97316', '#f59e0b', '#eab308',
@@ -270,23 +272,22 @@ export function EventEditor({ events, onChange, className }: EventEditorProps) {
 
                     {/* Dates */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label>{editingEvent?.type === 'event' ? 'Start Date' : 'Date'}</Label>
-                            <Input
-                                type="datetime-local"
-                                value={editingEvent?.startDate || ''}
-                                onChange={e => setEditingEvent(p => ({ ...p!, startDate: e.target.value }))}
-                            />
-                        </div>
+                        <CalendarModal
+                            label={editingEvent?.type === 'event' ? 'Start Date' : 'Date'}
+                            value={editingEvent?.startDate ? new Date(editingEvent.startDate) : null}
+                            onChange={(date) => setEditingEvent(p => ({ ...p!, startDate: date?.toISOString() || '' }))}
+                            placeholder="Pick a date..."
+                            showTime={true}
+                        />
                         {editingEvent?.type === 'event' && (
-                            <div className="space-y-2">
-                                <Label>End Date</Label>
-                                <Input
-                                    type="datetime-local"
-                                    value={editingEvent?.endDate || ''}
-                                    onChange={e => setEditingEvent(p => ({ ...p!, endDate: e.target.value }))}
-                                />
-                            </div>
+                            <CalendarModal
+                                label="End Date"
+                                value={editingEvent?.endDate ? new Date(editingEvent.endDate) : null}
+                                onChange={(date) => setEditingEvent(p => ({ ...p!, endDate: date?.toISOString() || '' }))}
+                                placeholder="Pick end date..."
+                                showTime={true}
+                                minDate={editingEvent?.startDate ? new Date(editingEvent.startDate) : undefined}
+                            />
                         )}
                     </div>
 
@@ -365,19 +366,16 @@ export function EventEditor({ events, onChange, className }: EventEditorProps) {
                     </div>
 
                     {/* Priority */}
-                    <div className="space-y-2">
-                        <Label>Priority</Label>
-                        <div className="flex items-center gap-3">
-                            <Input
-                                type="number"
-                                value={editingEvent?.priority || 0}
-                                onChange={e => setEditingEvent(p => ({ ...p!, priority: parseInt(e.target.value) || 0 }))}
-                                className="w-24"
-                                min={0}
-                                max={100}
-                            />
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <Label>Priority</Label>
                             <span className="text-xs text-slate-500">Higher values show first</span>
                         </div>
+                        <PrioritySelector
+                            value={editingEvent?.priority || 0}
+                            onChange={(val) => setEditingEvent(p => ({ ...p!, priority: val }))}
+                            max={5}
+                        />
                     </div>
 
                     {/* Preview */}

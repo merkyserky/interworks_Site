@@ -10,12 +10,15 @@ import {
     X,
     ChevronRight,
     Settings,
-    Image as ImageIcon
+    Image as ImageIcon,
+    Activity,
+    BarChart3
 } from 'lucide-react'
 import { Button } from '@panel/components/ui/button'
 import { cn } from '@panel/lib/utils'
 import { api, Game, Studio, User, Notification } from '@panel/lib/api'
 import { ToastProvider } from '@panel/components/ui/toast'
+import { KeyboardShortcutsButton } from '@panel/components/ui/keyboard-shortcuts'
 
 // Views
 import { GamesView } from './views/GamesView'
@@ -24,6 +27,8 @@ import { UsersView } from './views/UsersView'
 import { NotificationsView } from './views/NotificationsView'
 import { SettingsView } from './views/SettingsView'
 import { MediaView } from './views/MediaView'
+import { ActivityLogView } from './views/ActivityLogView'
+import { AnalyticsView } from './views/AnalyticsView'
 
 type Theme = 'dark' | 'light' | 'system';
 
@@ -160,6 +165,10 @@ function AppContent() {
                 return <SettingsView currentUser={currentUser} theme={theme} setTheme={setTheme} compactMode={compactMode} setCompactMode={setCompactMode} />;
             case 'media':
                 return <MediaView />;
+            case 'activity':
+                return <ActivityLogView />;
+            case 'analytics':
+                return <AnalyticsView />;
             default:
                 return <div className="text-center text-slate-500 mt-20">View not found</div>;
         }
@@ -170,6 +179,8 @@ function AppContent() {
         { id: 'studios', icon: <Building2 size={20} />, label: 'Studios' },
         { id: 'notifications', icon: <Bell size={20} />, label: 'Announcements' },
         { id: 'media', icon: <ImageIcon size={20} />, label: 'Media' },
+        { id: 'activity', icon: <Activity size={20} />, label: 'Activity Log' },
+        { id: 'analytics', icon: <BarChart3 size={20} />, label: 'Analytics' },
     ];
 
     const adminNavItems = [
@@ -304,6 +315,8 @@ function AppContent() {
                     </div>
 
                     <div className="flex items-center gap-2 sm:gap-4">
+                        <KeyboardShortcutsButton />
+
                         <div className="flex items-center gap-2 sm:gap-3 sm:border-l sm:border-slate-800 sm:pl-4">
                             <div className="text-right hidden sm:block">
                                 <p className="text-sm font-medium text-slate-200">{currentUser?.username || 'Guest'}</p>

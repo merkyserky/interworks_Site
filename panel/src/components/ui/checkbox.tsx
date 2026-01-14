@@ -134,7 +134,7 @@ export function Toggle({ checked, onChange, label, description, disabled = false
                 <span
                     className={cn(
                         "absolute top-[3px] left-[3px] h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform duration-200",
-                        checked && "translate-x-4"
+                        checked && "translate-x-2"
                     )}
                 />
             </button>

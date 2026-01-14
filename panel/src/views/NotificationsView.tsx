@@ -11,6 +11,7 @@ import { ConfirmModal } from '@panel/components/ui/confirm-modal'
 import { Select } from '@panel/components/ui/select'
 import { Toggle } from '@panel/components/ui/checkbox'
 import { useNotify } from '@panel/components/ui/toast'
+import { CalendarModal } from '@panel/components/ui/calendar-modal'
 
 interface NotificationsViewProps {
     notifications: Notification[];
@@ -87,7 +88,7 @@ export function NotificationsView({ notifications, games, onUpdate }: Notificati
         <div className="space-y-4 sm:space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                 <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                    <Search className="absolute left-3 top-[12px] h-4 w-4 text-slate-500" />
                     <Input placeholder="Search announcements..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-slate-900 border-slate-800" />
                 </div>
                 <Button onClick={() => { setEditingNotif({ active: true, gameId: games[0]?.id || '', title: '', description: '' }); setIsModalOpen(true); }} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 w-full sm:w-auto">
@@ -166,15 +167,13 @@ export function NotificationsView({ notifications, games, onUpdate }: Notificati
                         <Label>Description</Label>
                         <Textarea value={editingNotif?.description || ''} onChange={e => setEditingNotif(p => ({ ...p!, description: e.target.value }))} />
                     </div>
-                    <div className="space-y-2">
-                        <Label>Countdown Date (Optional)</Label>
-                        <Input
-                            type="datetime-local"
-                            value={editingNotif?.countdownTo || ''}
-                            onChange={e => setEditingNotif(p => ({ ...p!, countdownTo: e.target.value }))}
-                            className="text-slate-400"
-                        />
-                    </div>
+                    <CalendarModal
+                        label="Countdown Date (Optional)"
+                        value={editingNotif?.countdownTo ? new Date(editingNotif.countdownTo) : null}
+                        onChange={(date) => setEditingNotif(p => ({ ...p!, countdownTo: date?.toISOString() || '' }))}
+                        placeholder="Pick a countdown date..."
+                        showTime={true}
+                    />
                     <div className="space-y-2">
                         <Label>YouTube Video ID (Optional)</Label>
                         <Input

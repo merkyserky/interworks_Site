@@ -91,7 +91,7 @@ export function StudiosView({ studios, currentUser, onUpdate }: StudiosViewProps
         <div className="space-y-4 sm:space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                 <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <Search className="absolute left-3 top-[12px] h-4 w-4 text-slate-500" />
                     <Input placeholder="Search studios..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-slate-900 border-slate-800" />
                 </div>
                 <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 w-full sm:w-auto justify-center">
