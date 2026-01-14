@@ -13,6 +13,7 @@ import { Checkbox } from '@panel/components/ui/checkbox'
 import { GenreTags, parseGenres, genresToStrings } from '@panel/components/ui/genre-tags'
 import { EventEditor } from '@panel/components/ui/event-editor'
 import { useNotify } from '@panel/components/ui/toast'
+import { MediaPicker } from '@panel/components/ui/media-picker'
 import { cn } from '@panel/lib/utils'
 
 interface Genre {
@@ -256,9 +257,18 @@ export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewPr
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label>Logo URL</Label>
-                        <Input value={editingGame?.logo || ''} onChange={e => setEditingGame(prev => ({ ...prev!, logo: e.target.value }))} placeholder="/path/to/image.png" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <MediaPicker
+                            label="Logo"
+                            value={editingGame?.logo || ''}
+                            onChange={v => setEditingGame(prev => ({ ...prev!, logo: v }))}
+                        />
+                        <MediaPicker
+                            label="Thumbnails"
+                            allowMultiple
+                            values={(editingGame?.thumbnails || []) as string[]}
+                            onMultiChange={v => setEditingGame(prev => ({ ...prev!, thumbnails: v }))}
+                        />
                     </div>
 
                     <div className="space-y-2">

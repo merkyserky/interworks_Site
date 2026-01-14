@@ -10,6 +10,7 @@ import { Textarea } from '@panel/components/ui/textarea'
 import { ConfirmModal } from '@panel/components/ui/confirm-modal'
 import { useNotify } from '@panel/components/ui/toast'
 import { DiscordIcon, RobloxIcon, YouTubeIcon } from '@panel/components/ui/icons'
+import { MediaPicker } from '@panel/components/ui/media-picker'
 import { cn } from '@panel/lib/utils'
 
 interface StudiosViewProps {
@@ -228,10 +229,11 @@ export function StudiosView({ studios, currentUser, onUpdate }: StudiosViewProps
                         <Label>Description</Label>
                         <Textarea value={editingStudio?.description || ''} onChange={e => setEditingStudio(p => ({ ...p!, description: e.target.value }))} />
                     </div>
-                    <div className="space-y-2">
-                        <Label>Logo URL</Label>
-                        <Input value={editingStudio?.logo || ''} onChange={e => setEditingStudio(p => ({ ...p!, logo: e.target.value }))} placeholder="/studios/logo.png" />
-                    </div>
+                    <MediaPicker
+                        label="Logo"
+                        value={editingStudio?.logo || ''}
+                        onChange={v => setEditingStudio(p => ({ ...p!, logo: v }))}
+                    />
 
                     <div className="pt-2 border-t border-slate-800">
                         <Label className="text-slate-300 mb-3 block">Social Links</Label>
