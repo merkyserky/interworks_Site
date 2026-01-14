@@ -28,7 +28,7 @@ export function useAutoSaveDraft<T>(
 
     const [hasDraft, setHasDraft] = useState(false);
     const [draftAge, setDraftAge] = useState<string>('');
-    const timeoutRef = useRef<NodeJS.Timeout>();
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const restoreCalledRef = useRef(false);
 
     // Check for existing draft on mount
