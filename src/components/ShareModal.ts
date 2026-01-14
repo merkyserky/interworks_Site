@@ -16,13 +16,29 @@ interface ShareModalConfig {
 
 let currentShareModal: HTMLElement | null = null;
 
+// Generate a URL-friendly slug from game name or ID
+function generateGameSlug(game: { id: string; name: string }): string {
+    // Prefer name-based slug for readability
+    const slug = game.name.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+    return slug || game.id;
+}
+
 export function openShareModal(config: ShareModalConfig): void {
     closeShareModal();
 
     const { game } = config;
-    const shareUrl = game.link || window.location.href;
+
+    // Generate a shareable URL that will show rich Discord embed
+    const baseUrl = window.location.origin;
+    const gameSlug = generateGameSlug(game);
+    const shareUrl = `${baseUrl}/${gameSlug}`; // e.g., https://astralcore.ca/unseen-floors
+
     const shareText = `Check out ${game.name}! ${game.description?.slice(0, 100) || ''}`;
     const thumbnail = game.thumbnails?.[0] || game.logo || '';
+
 
     const modal = document.createElement('div');
     modal.id = 'share-modal';
@@ -59,7 +75,7 @@ export function openShareModal(config: ShareModalConfig): void {
                             ${game.logo ? `<img src="${game.logo}" alt="${game.name}" class="w-10 h-10 rounded-lg object-contain bg-black/50">` : ''}
                             <div>
                                 <h3 class="font-bold text-white">${game.name}</h3>
-                                <p class="text-xs text-gray-500">interworksdevs.pages.dev</p>
+                                <p class="text-xs text-gray-500">${window.location.hostname}/${gameSlug}</p>
                             </div>
                         </div>
                         ${game.description ? `<p class="text-sm text-gray-400 line-clamp-2">${game.description}</p>` : ''}
@@ -202,12 +218,10 @@ function trackEvent(type: 'pageview' | 'game_click' | 'share' | 'play_click', ga
     window.open(shareUrl, '_blank', 'width=600,height=400');
 };
 
-(window as any).shareToDiscord = (url: string, title: string, description: string) => {
-    // Discord doesn't have a direct share API, so we copy a formatted message
-    const message = `**${decodeURIComponent(title)}**\n${decodeURIComponent(description)}\n\n${decodeURIComponent(url)}`;
-    navigator.clipboard.writeText(message).then(() => {
-        // Show success state
-        showCopySuccess('Copied for Discord! Paste in any Discord chat.');
+(window as any).shareToDiscord = (url: string, _title: string, _description: string) => {
+    // Just copy the URL - Discord will automatically generate a rich embed from the OG meta tags
+    navigator.clipboard.writeText(decodeURIComponent(url)).then(() => {
+        showCopySuccess('Link copied! Paste in Discord for a rich embed preview.');
     });
 };
 

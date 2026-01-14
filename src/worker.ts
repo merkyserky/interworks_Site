@@ -881,6 +881,104 @@ export default {
             }
         }
 
+        // Game-specific routes for Discord/Social embeds (e.g., /unseen-floors)
+        // Check if this is a game slug route
+        const gameSlug = url.pathname.slice(1).toLowerCase(); // Remove leading slash
+        if (gameSlug && !gameSlug.includes('/') && !gameSlug.includes('.')) {
+            let games = await env.GAMES_DATABASE.get('games', 'json') as Game[] | null || DEFAULT_GAMES;
+            games = games.map(migrateGame);
+
+            // Find game by ID or name (slug-ified)
+            const game = games.find(g =>
+                g.id.toLowerCase() === gameSlug ||
+                g.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') === gameSlug
+            );
+
+            if (game) {
+                // Get studio info for the game
+                let studios = await env.GAMES_DATABASE.get('studios', 'json') as Studio[] | null || DEFAULT_STUDIOS;
+                const studio = studios.find(s => s.name === game.ownedBy);
+
+                // Base URL for absolute paths
+                const baseUrl = `https://${url.hostname}`;
+
+                // Get the best thumbnail
+                const thumbnail = game.thumbnails?.[0] || game.logo;
+                const absoluteThumbnail = thumbnail?.startsWith('http') ? thumbnail : `${baseUrl}${thumbnail}`;
+
+                // Status text
+                const statusText = {
+                    'playable': '🎮 Playable Now',
+                    'coming-soon': '🔜 Coming Soon',
+                    'beta': '🧪 Beta',
+                    'in-development': '🔧 In Development'
+                }[game.status] || '';
+
+                // Check if this is a bot/crawler (Discord, Twitter, etc.)
+                const userAgent = request.headers.get('User-Agent') || '';
+                const isBot = /discordbot|twitterbot|facebookexternalhit|linkedinbot|slackbot|telegrambot|whatsapp|pinterest|tumblr/i.test(userAgent);
+
+                if (isBot) {
+                    // Return HTML with Open Graph meta tags for bots
+                    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Primary Meta Tags -->
+    <title>${game.name} | AstralCore</title>
+    <meta name="title" content="${game.name} | AstralCore">
+    <meta name="description" content="${game.description || `Check out ${game.name}!`}">
+    
+    <!-- Open Graph / Discord / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="${baseUrl}/${gameSlug}">
+    <meta property="og:title" content="${game.name}">
+    <meta property="og:description" content="${game.description || `Check out ${game.name}!`}">
+    <meta property="og:image" content="${absoluteThumbnail}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="AstralCore">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="${baseUrl}/${gameSlug}">
+    <meta name="twitter:title" content="${game.name}">
+    <meta name="twitter:description" content="${game.description || `Check out ${game.name}!`}">
+    <meta name="twitter:image" content="${absoluteThumbnail}">
+    
+    <!-- Discord-specific (theme color) -->
+    <meta name="theme-color" content="#6366f1">
+    
+    <!-- Additional info -->
+    ${game.genres?.length ? `<meta property="og:article:tag" content="${game.genres.join(', ')}">` : ''}
+    ${studio ? `<meta property="og:article:author" content="${studio.name}">` : ''}
+</head>
+<body>
+    <h1>${game.name}</h1>
+    <p>${statusText}</p>
+    <p>${game.description || ''}</p>
+    ${game.link ? `<p><a href="${game.link}">Play Now</a></p>` : ''}
+    <p>By ${game.ownedBy}</p>
+</body>
+</html>`;
+
+                    return new Response(html, {
+                        status: 200,
+                        headers: {
+                            'Content-Type': 'text/html; charset=utf-8',
+                            'Cache-Control': 'public, max-age=3600'
+                        }
+                    });
+                } else {
+                    // Real user - redirect to main site with game section
+                    // Use hash to scroll to games section, add game ID as query for highlighting
+                    return Response.redirect(`${baseUrl}/#games?highlight=${game.id}`, 302);
+                }
+            }
+        }
+
         // Serve static files
         let response = await env.ASSETS.fetch(request);
         if (response.status === 404 && !url.pathname.match(/\.[a-zA-Z0-9]+$/)) {
