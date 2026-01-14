@@ -45,6 +45,9 @@ function AppContent() {
         const saved = localStorage.getItem('panel-theme') as Theme;
         return saved || 'dark';
     });
+    const [compactMode, setCompactMode] = useState(() => {
+        return localStorage.getItem('panel-compact') === 'true';
+    });
 
     // Apply theme
     useEffect(() => {
@@ -61,6 +64,17 @@ function AppContent() {
 
         localStorage.setItem('panel-theme', theme);
     }, [theme]);
+
+    // Apply compact mode
+    useEffect(() => {
+        const root = document.documentElement;
+        if (compactMode) {
+            root.classList.add('compact');
+        } else {
+            root.classList.remove('compact');
+        }
+        localStorage.setItem('panel-compact', String(compactMode));
+    }, [compactMode]);
 
     // Listen for system theme changes
     useEffect(() => {
@@ -143,7 +157,7 @@ function AppContent() {
             case 'notifications':
                 return <NotificationsView notifications={notifications} games={games} onUpdate={fetchData} />;
             case 'settings':
-                return <SettingsView currentUser={currentUser} theme={theme} setTheme={setTheme} />;
+                return <SettingsView currentUser={currentUser} theme={theme} setTheme={setTheme} compactMode={compactMode} setCompactMode={setCompactMode} />;
             case 'media':
                 return <MediaView />;
             default:

@@ -83,7 +83,7 @@ export function Checkbox({
     )
 }
 
-// Toggle Switch variant
+// Toggle Switch variant - Fixed: dot now stays inside
 interface ToggleProps {
     checked: boolean;
     onChange: (checked: boolean) => void;
@@ -124,7 +124,7 @@ export function Toggle({ checked, onChange, label, description, disabled = false
                 onClick={() => !disabled && onChange(!checked)}
                 disabled={disabled}
                 className={cn(
-                    "relative h-6 w-11 shrink-0 rounded-full transition-all duration-300",
+                    "relative h-6 w-10 shrink-0 rounded-full transition-colors duration-200",
                     "focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950",
                     checked
                         ? "bg-indigo-600"
@@ -133,8 +133,8 @@ export function Toggle({ checked, onChange, label, description, disabled = false
             >
                 <span
                     className={cn(
-                        "absolute top-1 left-1 h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-200",
-                        checked && "translate-x-5"
+                        "absolute top-[3px] left-[3px] h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform duration-200",
+                        checked && "translate-x-4"
                     )}
                 />
             </button>

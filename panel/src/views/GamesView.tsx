@@ -10,8 +10,14 @@ import { Textarea } from '@panel/components/ui/textarea'
 import { ConfirmModal } from '@panel/components/ui/confirm-modal'
 import { Select } from '@panel/components/ui/select'
 import { Checkbox } from '@panel/components/ui/checkbox'
+import { GenreTags, parseGenres, genresToStrings } from '@panel/components/ui/genre-tags'
 import { useNotify } from '@panel/components/ui/toast'
 import { cn } from '@panel/lib/utils'
+
+interface Genre {
+    name: string;
+    color: string;
+}
 
 interface GamesViewProps {
     games: Game[];
@@ -23,7 +29,7 @@ interface GamesViewProps {
 export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewProps) {
     const notify = useNotify();
     const [search, setSearch] = useState('')
-    const [editingGame, setEditingGame] = useState<Partial<Game> | null>(null)
+    const [editingGame, setEditingGame] = useState<Partial<Game> & { genreTags?: Genre[] } | null>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [deleteTarget, setDeleteTarget] = useState<Game | null>(null)
@@ -32,7 +38,6 @@ export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewPr
 
     const isAdmin = currentUser?.role === 'admin';
 
-    // Fixed: Added null/undefined checks to prevent toLowerCase errors
     const filteredGames = games.filter(g => {
         const nameMatch = (g.name || '').toLowerCase().includes(search.toLowerCase());
         const ownerMatch = (g.ownedBy || '').toLowerCase().includes(search.toLowerCase());
@@ -47,11 +52,18 @@ export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewPr
 
         setIsSaving(true);
         try {
+            // Convert genre tags back to string array for API
+            const gameData = {
+                ...editingGame,
+                genres: editingGame.genreTags ? genresToStrings(editingGame.genreTags) : editingGame.genres
+            };
+            delete (gameData as any).genreTags;
+
             if (editingGame.id) {
-                await api.put(`/api/games/${editingGame.id}`, editingGame);
+                await api.put(`/api/games/${editingGame.id}`, gameData);
                 notify.success(`"${editingGame.name}" updated successfully`);
             } else {
-                await api.post('/api/games', editingGame);
+                await api.post('/api/games', gameData);
                 notify.success(`"${editingGame.name}" created successfully`);
             }
             setIsModalOpen(false);
@@ -85,7 +97,10 @@ export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewPr
     }
 
     const openEdit = (game: Game) => {
-        setEditingGame({ ...game });
+        setEditingGame({
+            ...game,
+            genreTags: parseGenres(game.genres as any)
+        });
         setIsModalOpen(true);
     }
 
@@ -96,6 +111,7 @@ export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewPr
             ownedBy: studios[0]?.name || '',
             status: 'in-development',
             genres: [],
+            genreTags: [],
             visible: true
         });
         setIsModalOpen(true);
@@ -114,7 +130,7 @@ export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewPr
         <div className="space-y-4 sm:space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                 <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                     <Input
                         placeholder="Search games..."
                         value={search}
@@ -122,7 +138,7 @@ export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewPr
                         className="pl-9 bg-slate-900 border-slate-800"
                     />
                 </div>
-                <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 w-full sm:w-auto">
+                <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 w-full sm:w-auto justify-center">
                     <Plus size={16} /> Add Game
                 </Button>
             </div>
@@ -152,8 +168,22 @@ export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewPr
                         </div>
                         <CardContent className="p-3 sm:p-4">
                             <h3 className="font-bold text-slate-100 truncate">{game.name}</h3>
-                            <p className="text-xs text-slate-500 truncate mb-3">{game.ownedBy || 'No studio'}</p>
-                            <div className="flex justify-between items-center mt-3 sm:mt-4 pt-3 border-t border-slate-800/50">
+                            <p className="text-xs text-slate-500 truncate">{game.ownedBy || 'No studio'}</p>
+                            {game.genres && game.genres.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                    {(game.genres as string[]).slice(0, 2).map((genre, i) => (
+                                        <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+                                            {genre}
+                                        </span>
+                                    ))}
+                                    {game.genres.length > 2 && (
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-500">
+                                            +{game.genres.length - 2}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                            <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-800/50">
                                 {isAdmin ? (
                                     <Button
                                         variant="ghost"
@@ -241,11 +271,10 @@ export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewPr
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Genres (comma separated)</Label>
-                        <Input
-                            value={editingGame?.genres?.join(', ') || ''}
-                            onChange={e => setEditingGame(prev => ({ ...prev!, genres: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
-                            placeholder="Horror, RPG, Action"
+                        <Label>Genres</Label>
+                        <GenreTags
+                            genres={editingGame?.genreTags || []}
+                            onChange={tags => setEditingGame(prev => ({ ...prev!, genreTags: tags }))}
                         />
                     </div>
 

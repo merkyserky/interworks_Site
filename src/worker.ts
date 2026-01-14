@@ -167,36 +167,130 @@ function getLoginPageHTML(error?: string): string {
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta name="robots" content="noindex, nofollow"><title>Login | AstralCore Panel</title>
-	<script src="https://cdn.tailwindcss.com"></script>
-	<style>
-		@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-		body { font-family: 'Inter', sans-serif; }
-		.glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
-		.glow { box-shadow: 0 0 60px rgba(124,58,237,0.3); }
-		.input-glow:focus { box-shadow: 0 0 0 2px rgba(124,58,237,0.5); }
-		@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-		.float { animation: float 6s ease-in-out infinite; }
-	</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Login | AstralCore Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #030712; }
+        .glass { 
+            background: rgba(15, 23, 42, 0.8); 
+            backdrop-filter: blur(24px); 
+            border: 1px solid rgba(99, 102, 241, 0.15);
+        }
+        .input-focus:focus { 
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+        @keyframes float { 
+            0%, 100% { transform: translateY(0) rotate(0deg); } 
+            50% { transform: translateY(-20px) rotate(1deg); } 
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.05); }
+        }
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .float { animation: float 8s ease-in-out infinite; }
+        .pulse-glow { animation: pulse-glow 4s ease-in-out infinite; }
+        .gradient-shift {
+            background-size: 200% 200%;
+            animation: gradient-shift 8s ease infinite;
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #6366f1 100%);
+            background-size: 200% 200%;
+            transition: all 0.3s ease;
+        }
+        .btn-gradient:hover {
+            background-position: 100% 0;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px -10px rgba(99, 102, 241, 0.5);
+        }
+        .btn-gradient:active { transform: translateY(0); }
+    </style>
 </head>
-<body class="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
-	<div class="fixed inset-0 overflow-hidden pointer-events-none">
-		<div class="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-600/20 rounded-full blur-3xl"></div>
-		<div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-purple-600/20 rounded-full blur-3xl"></div>
-	</div>
-	<div class="relative z-10 w-full max-w-md float">
-		<div class="glass rounded-3xl p-8 glow">
-			<div class="text-center mb-8"><p class="text-gray-400 text-sm">Sign in to access the dashboard</p></div>
-			${error ? `<div class="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl"><p class="text-red-400 text-sm text-center">${error}</p></div>` : ''}
-			<form method="POST" action="/api/login" class="space-y-5">
-				<div><label class="block text-sm font-medium text-gray-300 mb-2">Username</label><input type="text" name="username" required class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none input-glow" placeholder="Username"></div>
-				<div><label class="block text-sm font-medium text-gray-300 mb-2">Password</label><input type="password" name="password" required class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none input-glow" placeholder="Password"></div>
-				<button type="submit" class="w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-semibold rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-transform">Sign In</button>
-			</form>
-		</div>
-	</div>
-</body></html>`;
+<body class="min-h-screen flex items-center justify-center p-4 overflow-hidden">
+    <!-- Animated Background -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-0 left-1/4 w-[600px] h-[600px] bg-indigo-600/20 rounded-full blur-[120px] pulse-glow"></div>
+        <div class="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-violet-600/20 rounded-full blur-[100px] pulse-glow" style="animation-delay: 2s"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-purple-600/10 rounded-full blur-[150px]"></div>
+        <!-- Grid pattern -->
+        <div class="absolute inset-0 opacity-[0.03]" style="background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 50px 50px;"></div>
+    </div>
+    
+    <div class="relative z-10 w-full max-w-md float">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 mb-4 shadow-lg shadow-indigo-500/30">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold text-white mb-1">AstralCore</h1>
+            <p class="text-slate-400 text-sm">Sign in to access the dashboard</p>
+        </div>
+        
+        <!-- Login Card -->
+        <div class="glass rounded-2xl p-8 shadow-2xl">
+            ${error ? `
+            <div class="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3">
+                <div class="shrink-0 h-10 w-10 rounded-full bg-red-500/20 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <p class="text-red-400 text-sm font-medium">${error}</p>
+            </div>` : ''}
+            
+            <form method="POST" action="/api/login" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Username</label>
+                    <input 
+                        type="text" 
+                        name="username" 
+                        required 
+                        autocomplete="username"
+                        class="w-full px-4 py-3.5 bg-slate-900/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none input-focus transition-all" 
+                        placeholder="Enter your username"
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Password</label>
+                    <input 
+                        type="password" 
+                        name="password" 
+                        required 
+                        autocomplete="current-password"
+                        class="w-full px-4 py-3.5 bg-slate-900/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none input-focus transition-all" 
+                        placeholder="Enter your password"
+                    >
+                </div>
+                <button 
+                    type="submit" 
+                    class="w-full py-3.5 btn-gradient text-white font-semibold rounded-xl"
+                >
+                    Sign In
+                </button>
+            </form>
+        </div>
+        
+        <!-- Footer -->
+        <p class="text-center text-slate-600 text-xs mt-6">
+            Protected by AstralCore &copy; ${new Date().getFullYear()}
+        </p>
+    </div>
+</body>
+</html>`;
 }
 
 // Helper to migrate old genre string to array
