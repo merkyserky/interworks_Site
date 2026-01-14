@@ -34,6 +34,25 @@ export const api = {
 
 // Types
 export interface SpotifyAlbum { name: string; spotifyId: string; }
+
+export type EventIcon = 'rocket' | 'star' | 'calendar' | 'clock' | 'gift' | 'fire' | 'sparkles' | 'trophy';
+
+export interface GameEvent {
+    id: string;
+    type: 'countdown' | 'event' | 'announcement';
+    title: string;
+    description?: string;
+    startDate?: string;
+    endDate?: string;
+    color: string;
+    icon?: EventIcon;
+    showOnCard?: boolean;
+    showOnHero?: boolean;
+    showCountdown?: boolean;
+    active: boolean;
+    priority?: number;
+}
+
 export interface Game {
     id: string;
     name: string;
@@ -48,6 +67,7 @@ export interface Game {
     link?: string;
     order?: number;
     visible?: boolean;
+    events?: GameEvent[];
 }
 
 export interface Studio {

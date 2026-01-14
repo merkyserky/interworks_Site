@@ -26,6 +26,27 @@ interface Notification {
     active: boolean;
 }
 
+// Game Events - highly customizable countdown/event system
+interface GameEvent {
+    id: string;
+    type: 'countdown' | 'event' | 'announcement';
+    title: string;
+    description?: string;
+    // For countdown: single target date
+    // For event: date range
+    startDate?: string; // ISO date string
+    endDate?: string;   // ISO date string (same as startDate for countdown, different for event range)
+    // Display options
+    color: string;      // Hex color for the event badge/banner
+    icon?: 'rocket' | 'star' | 'calendar' | 'clock' | 'gift' | 'fire' | 'sparkles' | 'trophy';
+    showOnCard?: boolean;   // Show on game card
+    showOnHero?: boolean;   // Show in hero section
+    showCountdown?: boolean; // Show countdown timer
+    // Status
+    active: boolean;
+    priority?: number;  // Higher = more important, shown first
+}
+
 interface Game {
     id: string;
     name: string;
@@ -40,7 +61,9 @@ interface Game {
     link?: string;
     order?: number;
     visible?: boolean;
+    events?: GameEvent[]; // Customizable events/countdowns
 }
+
 
 interface Studio {
     id: string;

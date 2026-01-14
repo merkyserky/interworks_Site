@@ -11,6 +11,7 @@ import { ConfirmModal } from '@panel/components/ui/confirm-modal'
 import { Select } from '@panel/components/ui/select'
 import { Checkbox } from '@panel/components/ui/checkbox'
 import { GenreTags, parseGenres, genresToStrings } from '@panel/components/ui/genre-tags'
+import { EventEditor } from '@panel/components/ui/event-editor'
 import { useNotify } from '@panel/components/ui/toast'
 import { cn } from '@panel/lib/utils'
 
@@ -275,6 +276,14 @@ export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewPr
                         <GenreTags
                             genres={editingGame?.genreTags || []}
                             onChange={tags => setEditingGame(prev => ({ ...prev!, genreTags: tags }))}
+                        />
+                    </div>
+
+                    {/* Events & Countdowns */}
+                    <div className="pt-4 border-t border-slate-800">
+                        <EventEditor
+                            events={editingGame?.events || []}
+                            onChange={events => setEditingGame(prev => ({ ...prev!, events }))}
                         />
                     </div>
 
