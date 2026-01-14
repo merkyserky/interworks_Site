@@ -1,6 +1,5 @@
-
 import { useState } from 'react'
-import { Plus, Search, Trash2, Bell, Clock } from 'lucide-react'
+import { Plus, Search, Trash2, Bell, Clock, Edit } from 'lucide-react'
 import { Notification, Game, api } from '@panel/lib/api'
 import { Button } from '@panel/components/ui/button'
 import { Input } from '@panel/components/ui/input'
@@ -8,6 +7,9 @@ import { Card, CardContent } from '@panel/components/ui/card'
 import { Modal } from '@panel/components/ui/modal'
 import { Label } from '@panel/components/ui/label'
 import { Textarea } from '@panel/components/ui/textarea'
+import { ConfirmModal } from '@panel/components/ui/confirm-modal'
+import { Select } from '@panel/components/ui/select'
+import { Toggle } from '@panel/components/ui/checkbox'
 
 interface NotificationsViewProps {
     notifications: Notification[];
@@ -19,8 +21,14 @@ export function NotificationsView({ notifications, games, onUpdate }: Notificati
     const [search, setSearch] = useState('')
     const [editingNotif, setEditingNotif] = useState<Partial<Notification> | null>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [deleteTarget, setDeleteTarget] = useState<Notification | null>(null)
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
 
-    const filtered = notifications.filter(n => n.title.toLowerCase().includes(search.toLowerCase()))
+    // Fixed: Added null/undefined checks to prevent toLowerCase errors
+    const filtered = notifications.filter(n =>
+        (n.title || '').toLowerCase().includes(search.toLowerCase())
+    );
 
     const save = async () => {
         if (!editingNotif) return;
@@ -35,11 +43,30 @@ export function NotificationsView({ notifications, games, onUpdate }: Notificati
         } catch (e) { alert(e); }
     }
 
-    const deleteNotif = async (id: string) => {
-        if (!confirm("Delete announcement?")) return;
-        await api.delete(`/api/announcements/${id}`);
-        onUpdate();
+    const handleDeleteClick = (notif: Notification) => {
+        setDeleteTarget(notif);
+        setIsConfirmOpen(true);
     }
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteTarget) return;
+        setIsDeleting(true);
+        try {
+            await api.delete(`/api/announcements/${deleteTarget.id}`);
+            setIsConfirmOpen(false);
+            setDeleteTarget(null);
+            onUpdate();
+        } catch (e) {
+            alert(e);
+        } finally {
+            setIsDeleting(false);
+        }
+    }
+
+    const gameOptions = [
+        { value: '', label: '(No specific game)' },
+        ...games.map(g => ({ value: g.id, label: g.name }))
+    ];
 
     return (
         <div className="space-y-6">
@@ -48,21 +75,21 @@ export function NotificationsView({ notifications, games, onUpdate }: Notificati
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
                     <Input placeholder="Search announcements..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-slate-900 border-slate-800" />
                 </div>
-                <Button onClick={() => { setEditingNotif({ active: true, gameId: games[0]?.id || '' }); setIsModalOpen(true); }} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2">
+                <Button onClick={() => { setEditingNotif({ active: true, gameId: games[0]?.id || '', title: '', description: '' }); setIsModalOpen(true); }} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2">
                     <Plus size={16} /> Add Announcement
                 </Button>
             </div>
 
             <div className="space-y-4">
                 {filtered.map(notif => (
-                    <Card key={notif.id} className="bg-slate-900/50 border-slate-800 hover:border-indigo-500/20">
+                    <Card key={notif.id} className="bg-slate-900/50 border-slate-800 hover:border-indigo-500/20 transition-all">
                         <CardContent className="p-4 flex flex-col md:flex-row gap-4 items-start md:items-center">
                             <div className="h-12 w-12 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0">
                                 <Bell size={24} />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <h3 className="font-bold text-slate-100 truncate">{notif.title}</h3>
+                                    <h3 className="font-bold text-slate-100 truncate">{notif.title || 'Untitled'}</h3>
                                     {notif.active ? (
                                         <span className="bg-emerald-500/10 text-emerald-400 text-[10px] px-2 py-0.5 rounded uppercase font-bold">Active</span>
                                     ) : (
@@ -78,8 +105,12 @@ export function NotificationsView({ notifications, games, onUpdate }: Notificati
                                 )}
                             </div>
                             <div className="flex items-center gap-2 shrink-0 ml-auto">
-                                <Button size="sm" variant="outline" onClick={() => { setEditingNotif({ ...notif }); setIsModalOpen(true); }}>Edit</Button>
-                                <Button size="sm" variant="ghost" className="text-slate-500 hover:text-red-400" onClick={() => deleteNotif(notif.id)}><Trash2 size={16} /></Button>
+                                <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingNotif({ ...notif }); setIsModalOpen(true); }}>
+                                    <Edit size={14} /> Edit
+                                </Button>
+                                <Button size="sm" variant="ghost" className="text-slate-500 hover:text-red-400" onClick={() => handleDeleteClick(notif)}>
+                                    <Trash2 size={16} />
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
@@ -87,7 +118,18 @@ export function NotificationsView({ notifications, games, onUpdate }: Notificati
                 {filtered.length === 0 && <div className="text-center py-10 text-slate-600">No announcements found.</div>}
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Announcement" footer={<Button onClick={save}>Save</Button>}>
+            {/* Edit/Create Modal */}
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title={editingNotif?.id ? "Edit Announcement" : "New Announcement"}
+                footer={
+                    <>
+                        <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                        <Button onClick={save} className="bg-indigo-600 hover:bg-indigo-700">Save</Button>
+                    </>
+                }
+            >
                 <div className="space-y-4">
                     <div className="space-y-2">
                         <Label>Title</Label>
@@ -95,10 +137,12 @@ export function NotificationsView({ notifications, games, onUpdate }: Notificati
                     </div>
                     <div className="space-y-2">
                         <Label>Game</Label>
-                        <select className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-sm text-white" value={editingNotif?.gameId || ''} onChange={e => setEditingNotif(p => ({ ...p!, gameId: e.target.value }))}>
-                            <option value="">(No specific game)</option>
-                            {games.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                        </select>
+                        <Select
+                            value={editingNotif?.gameId || ''}
+                            onChange={v => setEditingNotif(p => ({ ...p!, gameId: v }))}
+                            options={gameOptions}
+                            placeholder="Select a game..."
+                        />
                     </div>
                     <div className="space-y-2">
                         <Label>Description</Label>
@@ -106,16 +150,52 @@ export function NotificationsView({ notifications, games, onUpdate }: Notificati
                     </div>
                     <div className="space-y-2">
                         <Label>Countdown Date (Optional)</Label>
-                        <Input type="datetime-local" value={editingNotif?.countdownTo || ''} onChange={e => setEditingNotif(p => ({ ...p!, countdownTo: e.target.value }))} className="text-slate-400" />
+                        <Input
+                            type="datetime-local"
+                            value={editingNotif?.countdownTo || ''}
+                            onChange={e => setEditingNotif(p => ({ ...p!, countdownTo: e.target.value }))}
+                            className="text-slate-400"
+                        />
                     </div>
                     <div className="space-y-2">
-                        <label className="flex items-center gap-2">
-                            <input type="checkbox" checked={editingNotif?.active || false} onChange={e => setEditingNotif(p => ({ ...p!, active: e.target.checked }))} />
-                            <span className="text-slate-200 text-sm">Active / Visible</span>
-                        </label>
+                        <Label>YouTube Video ID (Optional)</Label>
+                        <Input
+                            value={editingNotif?.youtubeVideoId || ''}
+                            onChange={e => setEditingNotif(p => ({ ...p!, youtubeVideoId: e.target.value }))}
+                            placeholder="e.g. dQw4w9WgXcQ"
+                        />
                     </div>
+                    <div className="space-y-2">
+                        <Label>Link URL (Optional)</Label>
+                        <Input
+                            value={editingNotif?.link || ''}
+                            onChange={e => setEditingNotif(p => ({ ...p!, link: e.target.value }))}
+                            placeholder="https://example.com"
+                        />
+                    </div>
+                    <Toggle
+                        checked={editingNotif?.active || false}
+                        onChange={v => setEditingNotif(p => ({ ...p!, active: v }))}
+                        label="Active / Visible"
+                        description="Show this announcement on the site"
+                    />
                 </div>
             </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={isConfirmOpen}
+                onClose={() => {
+                    setIsConfirmOpen(false);
+                    setDeleteTarget(null);
+                }}
+                onConfirm={handleDeleteConfirm}
+                title="Delete Announcement"
+                message={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}
+                confirmText="Delete Announcement"
+                variant="danger"
+                loading={isDeleting}
+            />
         </div>
     )
 }

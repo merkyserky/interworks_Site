@@ -63,7 +63,7 @@ export default function App() {
             case 'games':
                 return <GamesView games={games} studios={studios} currentUser={currentUser} onUpdate={fetchData} />;
             case 'studios':
-                return <StudiosView studios={studios} onUpdate={fetchData} />;
+                return <StudiosView studios={studios} currentUser={currentUser} onUpdate={fetchData} />;
             case 'users':
                 return <UsersView users={users} studios={studios} currentUser={currentUser!} onUpdate={fetchData} />;
             case 'notifications':

@@ -1,42 +1,43 @@
-
 import { useState } from 'react'
-import { Plus, Search, Edit, Trash2 } from 'lucide-react'
-import { Studio, api } from '@panel/lib/api'
+import { Plus, Search, Edit, Trash2, ShieldAlert } from 'lucide-react'
+import { Studio, User, api } from '@panel/lib/api'
 import { Button } from '@panel/components/ui/button'
 import { Input } from '@panel/components/ui/input'
 import { Card, CardContent } from '@panel/components/ui/card'
 import { Modal } from '@panel/components/ui/modal'
 import { Label } from '@panel/components/ui/label'
 import { Textarea } from '@panel/components/ui/textarea'
+import { ConfirmModal } from '@panel/components/ui/confirm-modal'
 
 interface StudiosViewProps {
     studios: Studio[];
+    currentUser: User | null;
     onUpdate: () => void;
 }
 
-export function StudiosView({ studios, onUpdate }: StudiosViewProps) {
+export function StudiosView({ studios, currentUser, onUpdate }: StudiosViewProps) {
     const [search, setSearch] = useState('')
     const [editingStudio, setEditingStudio] = useState<Partial<Studio> | null>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [deleteTarget, setDeleteTarget] = useState<Studio | null>(null)
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
 
-    const filtered = studios.filter(s => s.name.toLowerCase().includes(search.toLowerCase()))
+    const isAdmin = currentUser?.role === 'admin';
 
-    // Correct save logic
+    // Fixed: Added null/undefined checks to prevent toLowerCase errors
+    const filtered = studios.filter(s =>
+        (s.name || '').toLowerCase().includes(search.toLowerCase())
+    );
+
     const saveStudio = async () => {
         if (!editingStudio) return;
         try {
-            // We need to know if we are updating or creating.
-            // If we opened via "Edit", we pass the ID.
-            // The ID in the form might be editable only on create?
-            // Worker: `put` requires `/api/studios/:id`.
-
-            // Simplification: We will trust `editingStudio.id` matching an existing one implies update.
             const isUpdate = studios.some(s => s.id === editingStudio.id);
 
             if (isUpdate) {
                 await api.put(`/api/studios/${editingStudio.id}`, editingStudio);
             } else {
-                // Ensure ID
                 if (!editingStudio.id) editingStudio.id = editingStudio.name?.toLowerCase().replace(/[^a-z0-9]/g, '-');
                 await api.post('/api/studios', editingStudio);
             }
@@ -47,12 +48,24 @@ export function StudiosView({ studios, onUpdate }: StudiosViewProps) {
         }
     }
 
-    const deleteStudio = async (id: string) => {
-        if (!confirm("Delete studio?")) return;
+    const handleDeleteClick = (studio: Studio) => {
+        setDeleteTarget(studio);
+        setIsConfirmOpen(true);
+    }
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteTarget) return;
+        setIsDeleting(true);
         try {
-            await api.delete(`/api/studios/${id}`);
+            await api.delete(`/api/studios/${deleteTarget.id}`);
+            setIsConfirmOpen(false);
+            setDeleteTarget(null);
             onUpdate();
-        } catch (e) { alert(e); }
+        } catch (e) {
+            alert(e);
+        } finally {
+            setIsDeleting(false);
+        }
     }
 
     const openCreate = () => {
@@ -78,15 +91,26 @@ export function StudiosView({ studios, onUpdate }: StudiosViewProps) {
                         <CardContent className="p-6">
                             <div className="flex items-start justify-between mb-4">
                                 <div className="h-12 w-12 rounded-lg bg-slate-800 overflow-hidden flex items-center justify-center">
-                                    {studio.logo ? <img src={studio.logo} className="w-full h-full object-cover" /> : <span className="text-xl font-bold text-slate-500">{studio.name[0]}</span>}
+                                    {studio.logo ? <img src={studio.logo} className="w-full h-full object-cover" /> : <span className="text-xl font-bold text-slate-500">{(studio.name || 'S')[0]}</span>}
                                 </div>
                                 <div className="flex gap-2">
                                     <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-slate-800" onClick={() => { setEditingStudio({ ...studio }); setIsModalOpen(true); }}>
                                         <Edit size={16} className="text-slate-400" />
                                     </Button>
-                                    <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-red-900/20 hover:text-red-400" onClick={() => deleteStudio(studio.id)}>
-                                        <Trash2 size={16} />
-                                    </Button>
+                                    {isAdmin ? (
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-8 w-8 hover:bg-red-900/20 hover:text-red-400"
+                                            onClick={() => handleDeleteClick(studio)}
+                                        >
+                                            <Trash2 size={16} />
+                                        </Button>
+                                    ) : (
+                                        <div className="h-8 w-8 flex items-center justify-center text-slate-600" title="Admin only">
+                                            <ShieldAlert size={14} />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <h3 className="text-lg font-bold text-slate-100 mb-1">{studio.name}</h3>
@@ -101,7 +125,24 @@ export function StudiosView({ studios, onUpdate }: StudiosViewProps) {
                 ))}
             </div>
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Edit Studio" footer={<><Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button><Button onClick={saveStudio}>Save</Button></>}>
+            {filtered.length === 0 && (
+                <div className="text-center py-20 text-slate-600">
+                    No studios found matching your search.
+                </div>
+            )}
+
+            {/* Edit/Create Modal */}
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title={editingStudio?.id && studios.some(s => s.id === editingStudio.id) ? "Edit Studio" : "New Studio"}
+                footer={
+                    <>
+                        <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                        <Button onClick={saveStudio} className="bg-indigo-600 hover:bg-indigo-700">Save</Button>
+                    </>
+                }
+            >
                 <div className="space-y-4">
                     <div className="space-y-2">
                         <Label>ID (Unique)</Label>
@@ -123,8 +164,27 @@ export function StudiosView({ studios, onUpdate }: StudiosViewProps) {
                         <Label>Discord Link</Label>
                         <Input value={editingStudio?.discord || ''} onChange={e => setEditingStudio(p => ({ ...p!, discord: e.target.value }))} />
                     </div>
+                    <div className="space-y-2">
+                        <Label>Roblox Link</Label>
+                        <Input value={editingStudio?.roblox || ''} onChange={e => setEditingStudio(p => ({ ...p!, roblox: e.target.value }))} />
+                    </div>
                 </div>
             </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={isConfirmOpen}
+                onClose={() => {
+                    setIsConfirmOpen(false);
+                    setDeleteTarget(null);
+                }}
+                onConfirm={handleDeleteConfirm}
+                title="Delete Studio"
+                message={`Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone. Any games associated with this studio will need to be reassigned.`}
+                confirmText="Delete Studio"
+                variant="danger"
+                loading={isDeleting}
+            />
         </div>
     )
 }

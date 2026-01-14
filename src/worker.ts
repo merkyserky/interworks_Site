@@ -389,12 +389,10 @@ export default {
                     return jsonResponse(newGame, 201);
                 }
                 if (gameMatch && request.method === 'DELETE') {
+                    // Admin-only for game deletion
+                    if (currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden: Only admins can delete games' }, 403);
+
                     let games = (await env.GAMES_DATABASE.get('games', 'json') as any[] || [...DEFAULT_GAMES]).map(migrateGame);
-
-                    // Permission check
-                    const game = games.find(g => g.id === gameMatch[1]);
-                    if (game && !hasStudioPermission(currentUser, game.ownedBy)) return jsonResponse({ error: 'Forbidden' }, 403);
-
                     games = games.filter(g => g.id !== gameMatch[1]);
                     await env.GAMES_DATABASE.put('games', JSON.stringify(games));
                     return jsonResponse({ success: true });
