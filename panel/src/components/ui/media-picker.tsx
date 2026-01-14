@@ -19,6 +19,7 @@ interface MediaPickerProps {
     allowMultiple?: boolean;
     values?: string[];
     onMultiChange?: (values: string[]) => void;
+    defaultCategory?: string;
 }
 
 // Categories for media organization
@@ -61,10 +62,10 @@ const AVAILABLE_MEDIA = [
     { path: '/favicon.svg', name: 'Favicon', type: 'icon' },
 ];
 
-export function MediaPicker({ value, onChange, label, allowMultiple, values, onMultiChange }: MediaPickerProps) {
+export function MediaPicker({ value, onChange, label, allowMultiple, values, onMultiChange, defaultCategory }: MediaPickerProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [selectedCategory, setSelectedCategory] = useState(defaultCategory || 'all');
     const [selectedItems, setSelectedItems] = useState<string[]>(values || (value ? [value] : []));
 
     const category = CATEGORIES.find(c => c.id === selectedCategory) || CATEGORIES[0];

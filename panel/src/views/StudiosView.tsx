@@ -233,6 +233,13 @@ export function StudiosView({ studios, currentUser, onUpdate }: StudiosViewProps
                         label="Logo"
                         value={editingStudio?.logo || ''}
                         onChange={v => setEditingStudio(p => ({ ...p!, logo: v }))}
+                        defaultCategory="logos"
+                    />
+                    <MediaPicker
+                        label="Hero Background"
+                        value={editingStudio?.heroImage || ''}
+                        onChange={v => setEditingStudio(p => ({ ...p!, heroImage: v }))}
+                        defaultCategory="backgrounds"
                     />
 
                     <div className="pt-2 border-t border-slate-800">

@@ -78,6 +78,7 @@ export interface Studio {
     thumbnail?: string;
     hero?: boolean;
     media?: string[];
+    heroImage?: string;
     discord?: string;
     roblox?: string;
     youtube?: string;
