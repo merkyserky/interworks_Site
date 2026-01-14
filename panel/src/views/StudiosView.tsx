@@ -11,6 +11,7 @@ import { ConfirmModal } from '@panel/components/ui/confirm-modal'
 import { useNotify } from '@panel/components/ui/toast'
 import { DiscordIcon, RobloxIcon, YouTubeIcon } from '@panel/components/ui/icons'
 import { MediaPicker } from '@panel/components/ui/media-picker'
+import { Toggle } from '@panel/components/ui/checkbox'
 import { cn } from '@panel/lib/utils'
 
 interface StudiosViewProps {
@@ -240,6 +241,13 @@ export function StudiosView({ studios, currentUser, onUpdate }: StudiosViewProps
                         value={editingStudio?.heroImage || ''}
                         onChange={v => setEditingStudio(p => ({ ...p!, heroImage: v }))}
                         defaultCategory="backgrounds"
+                    />
+
+                    <Toggle
+                        label="Feature in Hero"
+                        description="Show this studio in the main hero slider"
+                        checked={editingStudio?.hero || false}
+                        onChange={c => setEditingStudio(p => ({ ...p!, hero: c }))}
                     />
 
                     <div className="pt-2 border-t border-slate-800">
