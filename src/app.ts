@@ -10,7 +10,26 @@ import { onDOMReady } from '@utils/dom'
 // Types matching API
 interface SpotifyAlbum { name: string; spotifyId: string; }
 interface GameNotification { id: string; gameId: string; title: string; description: string; countdownTo?: string; youtubeVideoId?: string; link?: string; active: boolean; }
-interface Game { id: string; name: string; logo: string; description: string; ownedBy: string; status: 'coming-soon' | 'playable' | 'beta' | 'in-development'; genres: string[]; youtubeVideoId?: string; thumbnails?: string[]; spotifyAlbums?: SpotifyAlbum[]; link?: string; order?: number; visible?: boolean; }
+
+// Event types
+type EventIcon = 'rocket' | 'star' | 'calendar' | 'clock' | 'gift' | 'fire' | 'sparkles' | 'trophy';
+interface GameEvent {
+    id: string;
+    type: 'countdown' | 'event' | 'announcement';
+    title: string;
+    description?: string;
+    startDate?: string;
+    endDate?: string;
+    color: string;
+    icon?: EventIcon;
+    showOnCard?: boolean;
+    showOnHero?: boolean;
+    showCountdown?: boolean;
+    active: boolean;
+    priority?: number;
+}
+
+interface Game { id: string; name: string; logo: string; description: string; ownedBy: string; status: 'coming-soon' | 'playable' | 'beta' | 'in-development'; genres: string[]; youtubeVideoId?: string; thumbnails?: string[]; spotifyAlbums?: SpotifyAlbum[]; link?: string; order?: number; visible?: boolean; events?: GameEvent[]; }
 interface Studio { id: string; name: string; description?: string; logo?: string; thumbnail?: string; hero?: boolean; media?: string[]; discord?: string; roblox?: string; youtube?: string; }
 
 // Modifying CONFIG to support new modals
@@ -31,11 +50,12 @@ function convertGame(game: Game) {
         ownedBy: game.ownedBy,
         ownedByUrl: studio?.discord,
         status: game.status,
-        genre: game.genres.join(', '),
+        genres: game.genres, // Keep as array
         youtubeVideoId: game.youtubeVideoId,
         thumbnails: game.thumbnails,
         spotifyAlbums: game.spotifyAlbums,
-        link: game.link
+        link: game.link,
+        events: game.events // Pass events through
     }
 }
 

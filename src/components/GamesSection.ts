@@ -1,11 +1,30 @@
 /**
  * Games Section Component
- * Full-width games showcase with video backgrounds and Spotify embeds
+ * Full-width games showcase with video backgrounds, Spotify embeds, and event countdowns
  */
 
 export interface SpotifyAlbum {
     name: string
-    spotifyId: string  // The Spotify album/playlist ID
+    spotifyId: string
+}
+
+// Event types matching the panel
+export type EventIcon = 'rocket' | 'star' | 'calendar' | 'clock' | 'gift' | 'fire' | 'sparkles' | 'trophy';
+
+export interface GameEvent {
+    id: string;
+    type: 'countdown' | 'event' | 'announcement';
+    title: string;
+    description?: string;
+    startDate?: string;
+    endDate?: string;
+    color: string;
+    icon?: EventIcon;
+    showOnCard?: boolean;
+    showOnHero?: boolean;
+    showCountdown?: boolean;
+    active: boolean;
+    priority?: number;
 }
 
 export interface Game {
@@ -18,12 +37,13 @@ export interface Game {
     ownedByUrl?: string
     link?: string
     youtubeVideoId?: string
-    thumbnails?: readonly string[]    // Array of thumbnail images (cycles when paused)
+    thumbnails?: readonly string[]
     spotifyAlbums?: readonly SpotifyAlbum[]
     status?: 'coming-soon' | 'playable' | 'beta' | 'in-development'
     releaseDate?: string
-    genre?: string
+    genres?: readonly string[]
     platforms?: readonly string[]
+    events?: readonly GameEvent[]
 }
 
 export interface GamesSectionConfig {
@@ -31,6 +51,18 @@ export interface GamesSectionConfig {
     subheading?: string
     games: ReadonlyArray<Game>
 }
+
+// Icon SVGs for events
+const EVENT_ICONS: Record<EventIcon, string> = {
+    rocket: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>`,
+    star: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+    calendar: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+    clock: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    gift: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>`,
+    fire: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c-5.5 5.5-5 10-5 10a5 5 0 0 0 10 0s.5-4.5-5-10z"/></svg>`,
+    sparkles: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>`,
+    trophy: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>`,
+};
 
 // Icon helpers
 function getPlayIcon(): string {
@@ -49,6 +81,102 @@ function getVolumeMutedIcon(): string {
     return `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>`
 }
 
+// Calculate countdown
+function getCountdown(targetDate: string): { days: number; hours: number; minutes: number; seconds: number; isPast: boolean } {
+    const target = new Date(targetDate).getTime();
+    const now = Date.now();
+    const diff = target - now;
+
+    if (diff <= 0) {
+        return { days: 0, hours: 0, minutes: 0, seconds: 0, isPast: true };
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    return { days, hours, minutes, seconds, isPast: false };
+}
+
+// Create event badge for game card
+function createEventBadge(event: GameEvent): HTMLElement {
+    const badge = document.createElement('div');
+    badge.className = 'flex items-center gap-2 px-3 py-1.5 rounded-lg backdrop-blur-md text-sm font-medium';
+    badge.style.backgroundColor = `${event.color}30`;
+    badge.style.color = event.color;
+    badge.style.border = `1px solid ${event.color}40`;
+
+    // Icon
+    if (event.icon && EVENT_ICONS[event.icon]) {
+        const iconSpan = document.createElement('span');
+        iconSpan.className = 'flex-shrink-0';
+        iconSpan.innerHTML = EVENT_ICONS[event.icon];
+        badge.appendChild(iconSpan);
+    }
+
+    // Title
+    const title = document.createElement('span');
+    title.className = 'font-semibold tracking-wide uppercase text-xs';
+    title.textContent = event.title;
+    badge.appendChild(title);
+
+    return badge;
+}
+
+// Create countdown timer element
+function createCountdownTimer(event: GameEvent, targetDate: string): HTMLElement {
+    const container = document.createElement('div');
+    container.className = 'flex items-center gap-3 px-4 py-2 rounded-xl backdrop-blur-md';
+    container.style.backgroundColor = `${event.color}20`;
+    container.style.border = `1px solid ${event.color}30`;
+
+    // Icon and title
+    const header = document.createElement('div');
+    header.className = 'flex items-center gap-2';
+
+    if (event.icon && EVENT_ICONS[event.icon]) {
+        const iconSpan = document.createElement('span');
+        iconSpan.style.color = event.color;
+        iconSpan.innerHTML = EVENT_ICONS[event.icon];
+        header.appendChild(iconSpan);
+    }
+
+    const title = document.createElement('span');
+    title.className = 'text-sm font-semibold uppercase tracking-wide';
+    title.style.color = event.color;
+    title.textContent = event.title;
+    header.appendChild(title);
+    container.appendChild(header);
+
+    // Countdown digits
+    const countdown = document.createElement('div');
+    countdown.className = 'flex items-center gap-1 text-white font-mono';
+    countdown.id = `countdown-${event.id}`;
+    container.appendChild(countdown);
+
+    // Update countdown every second
+    const updateCountdown = () => {
+        const { days, hours, minutes, seconds, isPast } = getCountdown(targetDate);
+
+        if (isPast) {
+            countdown.innerHTML = `<span class="text-sm" style="color: ${event.color}">Live Now!</span>`;
+            return;
+        }
+
+        countdown.innerHTML = `
+            ${days > 0 ? `<span class="bg-black/40 px-2 py-1 rounded text-sm">${days}d</span>` : ''}
+            <span class="bg-black/40 px-2 py-1 rounded text-sm">${hours.toString().padStart(2, '0')}h</span>
+            <span class="bg-black/40 px-2 py-1 rounded text-sm">${minutes.toString().padStart(2, '0')}m</span>
+            <span class="bg-black/40 px-2 py-1 rounded text-sm">${seconds.toString().padStart(2, '0')}s</span>
+        `;
+    };
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    return container;
+}
 
 export function createGamesSection(config: GamesSectionConfig): HTMLElement {
     const { heading, subheading, games } = config
@@ -57,11 +185,9 @@ export function createGamesSection(config: GamesSectionConfig): HTMLElement {
     section.id = 'games'
     section.className = 'relative bg-gradient-to-b from-[#0a0a12] via-[#0d0d18] to-[#0a0a12] pt-32 pb-8'
 
-    // Content container
     const content = document.createElement('div')
     content.className = 'relative z-10'
 
-    // Section heading
     const headerContainer = document.createElement('div')
     headerContainer.className = 'max-w-7xl mx-auto px-8 mb-12'
 
@@ -77,7 +203,6 @@ export function createGamesSection(config: GamesSectionConfig): HTMLElement {
 
     content.appendChild(headerContainer)
 
-    // Games - full width
     const gamesContainer = document.createElement('div')
     gamesContainer.className = 'flex flex-col'
 
@@ -96,12 +221,22 @@ function createGameCard(game: Game): HTMLElement {
     const card = document.createElement('article')
     card.className = 'group relative w-full min-h-[70vh] overflow-hidden'
 
-    // Video or image background - FULL WIDTH
+    // Get active events for this game
+    const activeEvents = (game.events || [])
+        .filter(e => e.active && e.showOnCard)
+        .sort((a, b) => (b.priority || 0) - (a.priority || 0));
+
+    const activeCountdownEvent = activeEvents.find(e =>
+        (e.type === 'countdown' || e.type === 'event') &&
+        e.showCountdown &&
+        e.startDate
+    );
+
+    // Video or image background
     if (game.youtubeVideoId) {
         let isPlaying = true
         let pauseTimeout: number | null = null
 
-        // Video container
         const videoBg = document.createElement('div')
         videoBg.className = 'absolute inset-0 z-0 transition-opacity duration-500'
         videoBg.id = `video-bg-${game.id}`
@@ -121,7 +256,6 @@ function createGameCard(game: Game): HTMLElement {
         videoBg.appendChild(videoWrapper)
         card.appendChild(videoBg)
 
-        // Thumbnail container (hidden by default) - supports multiple thumbnails that cycle
         const thumbnails = game.thumbnails || [game.logo]
         let currentThumbnailIndex = 0
         let thumbnailInterval: number | null = null
@@ -134,7 +268,6 @@ function createGameCard(game: Game): HTMLElement {
         thumbnailBg.style.backgroundPosition = 'center'
         card.appendChild(thumbnailBg)
 
-        // Function to cycle thumbnails
         const cycleThumbnails = () => {
             if (thumbnails.length > 1) {
                 thumbnailInterval = window.setInterval(() => {
@@ -151,17 +284,14 @@ function createGameCard(game: Game): HTMLElement {
             }
         }
 
-        // Gradient overlay
         const gradient = document.createElement('div')
         gradient.className = 'absolute inset-0 z-[1]'
         gradient.style.background = 'linear-gradient(to right, rgba(10,10,18,0.95) 0%, rgba(10,10,18,0.8) 30%, rgba(10,10,18,0.3) 60%, transparent 100%)'
         card.appendChild(gradient)
 
-        // Video controls container
         const controlsContainer = document.createElement('div')
         controlsContainer.className = 'absolute bottom-6 right-6 z-20 flex items-center gap-2'
 
-        // Pause/Play button
         const playPauseBtn = document.createElement('button')
         playPauseBtn.className = `
             w-10 h-10 rounded-full
@@ -214,7 +344,6 @@ function createGameCard(game: Game): HTMLElement {
 
         controlsContainer.appendChild(playPauseBtn)
 
-        // Volume control - simple mute button (no slider for now since YouTube API is limited)
         let isMuted = true
         const muteBtn = document.createElement('button')
         muteBtn.className = `
@@ -269,15 +398,21 @@ function createGameCard(game: Game): HTMLElement {
         card.appendChild(gradient)
     }
 
-    // Content overlay - main layout
+    // Content overlay
     const contentOverlay = document.createElement('div')
     contentOverlay.className = 'relative z-10 flex min-h-[70vh] px-8 md:px-16 lg:px-24 py-16'
 
-    // Left side - Game info
     const infoContainer = document.createElement('div')
     infoContainer.className = 'flex-1 flex flex-col justify-center max-w-xl'
 
-    // Badges row
+    // Event countdown (if applicable)
+    if (activeCountdownEvent && activeCountdownEvent.startDate) {
+        const countdownEl = createCountdownTimer(activeCountdownEvent, activeCountdownEvent.startDate);
+        countdownEl.className += ' mb-6 w-fit';
+        infoContainer.appendChild(countdownEl);
+    }
+
+    // Badges row (status + genres + events)
     const badgesRow = document.createElement('div')
     badgesRow.className = 'flex flex-wrap gap-2 mb-6'
 
@@ -305,12 +440,24 @@ function createGameCard(game: Game): HTMLElement {
         badgesRow.appendChild(badge)
     }
 
-    if (game.genre) {
-        const genreBadge = document.createElement('span')
-        genreBadge.className = 'inline-block px-4 py-1.5 text-xs tracking-widest uppercase rounded-full bg-white/10 text-gray-200 backdrop-blur-sm'
-        genreBadge.textContent = game.genre
-        badgesRow.appendChild(genreBadge)
+    // Genre badges
+    if (game.genres && game.genres.length > 0) {
+        game.genres.slice(0, 3).forEach(genre => {
+            const genreBadge = document.createElement('span')
+            genreBadge.className = 'inline-block px-4 py-1.5 text-xs tracking-widest uppercase rounded-full bg-white/10 text-gray-200 backdrop-blur-sm'
+            genreBadge.textContent = genre
+            badgesRow.appendChild(genreBadge)
+        });
     }
+
+    // Event badges (non-countdown ones)
+    activeEvents
+        .filter(e => e.type === 'announcement' || !e.showCountdown)
+        .slice(0, 2)
+        .forEach(event => {
+            const eventBadge = createEventBadge(event);
+            badgesRow.appendChild(eventBadge);
+        });
 
     if (badgesRow.children.length > 0) {
         infoContainer.appendChild(badgesRow)
@@ -340,7 +487,6 @@ function createGameCard(game: Game): HTMLElement {
     const metaRow = document.createElement('div')
     metaRow.className = 'flex flex-wrap gap-6 text-sm text-gray-400 mb-8'
 
-    // Owned By
     if (game.ownedBy) {
         const ownedByEl = document.createElement('div')
         const label = '<span class="text-gray-500">Owned By:</span>'
@@ -390,18 +536,16 @@ function createGameCard(game: Game): HTMLElement {
 
     contentOverlay.appendChild(infoContainer)
 
-    // Right side - Spotify embed (top right)
+    // Spotify embed
     if (game.spotifyAlbums && game.spotifyAlbums.length > 0) {
         const spotifyContainer = document.createElement('div')
         spotifyContainer.className = 'hidden lg:flex flex-col items-end ml-auto self-start mt-8'
 
-        // Spotify label
         const spotifyLabel = document.createElement('div')
         spotifyLabel.className = 'text-gray-400 text-xs tracking-widest uppercase mb-3'
         spotifyLabel.textContent = 'Soundtrack'
         spotifyContainer.appendChild(spotifyLabel)
 
-        // Album selector if multiple albums
         if (game.spotifyAlbums.length > 1) {
             const selector = document.createElement('div')
             selector.className = 'flex gap-2 mb-3'
@@ -414,7 +558,6 @@ function createGameCard(game: Game): HTMLElement {
                 btn.className = `px-3 py-1 text-xs rounded-full transition-all ${index === 0 ? 'bg-green-500 text-black' : 'bg-white/10 text-gray-300 hover:bg-white/20'}`
                 btn.textContent = album.name
                 btn.onclick = () => {
-                    // Update active button
                     selector.querySelectorAll('button').forEach((b, i) => {
                         if (i === index) {
                             b.className = 'px-3 py-1 text-xs rounded-full transition-all bg-green-500 text-black'
@@ -422,19 +565,15 @@ function createGameCard(game: Game): HTMLElement {
                             b.className = 'px-3 py-1 text-xs rounded-full transition-all bg-white/10 text-gray-300 hover:bg-white/20'
                         }
                     })
-                    // Update embed
                     embedContainer.innerHTML = createSpotifyEmbed(album.spotifyId)
                 }
                 selector.appendChild(btn)
             })
 
             spotifyContainer.appendChild(selector)
-
-            // Initial embed
             embedContainer.innerHTML = createSpotifyEmbed(game.spotifyAlbums[0].spotifyId)
             spotifyContainer.appendChild(embedContainer)
         } else {
-            // Single album
             const embedContainer = document.createElement('div')
             embedContainer.innerHTML = createSpotifyEmbed(game.spotifyAlbums[0].spotifyId)
             spotifyContainer.appendChild(embedContainer)
