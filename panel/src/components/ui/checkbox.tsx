@@ -21,9 +21,9 @@ export function Checkbox({
     size = 'md'
 }: CheckboxProps) {
     const sizes = {
-        sm: { box: 'h-4 w-4', icon: 12 },
-        md: { box: 'h-5 w-5', icon: 14 },
-        lg: { box: 'h-6 w-6', icon: 16 }
+        sm: { box: 'h-4 w-4', icon: 10, rounded: 'rounded' },
+        md: { box: 'h-5 w-5', icon: 12, rounded: 'rounded-md' },
+        lg: { box: 'h-6 w-6', icon: 14, rounded: 'rounded-md' }
     };
 
     const s = sizes[size];
@@ -31,7 +31,7 @@ export function Checkbox({
     return (
         <label
             className={cn(
-                "flex items-start gap-3 cursor-pointer group",
+                "flex items-start gap-3 cursor-pointer group select-none",
                 disabled && "cursor-not-allowed opacity-50",
                 className
             )}
@@ -44,41 +44,36 @@ export function Checkbox({
                 disabled={disabled}
                 className={cn(
                     s.box,
-                    "relative shrink-0 rounded-md border-2 transition-all duration-200 mt-0.5",
-                    "focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-slate-950",
+                    s.rounded,
+                    "relative shrink-0 transition-all duration-200 mt-0.5",
+                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950",
                     checked
-                        ? "bg-gradient-to-br from-indigo-600 to-violet-600 border-transparent shadow-lg shadow-indigo-500/30"
-                        : "border-slate-600 bg-slate-900 group-hover:border-slate-500",
-                    "active:scale-90"
+                        ? "bg-indigo-600 border-indigo-600"
+                        : "bg-slate-900 border-slate-600 hover:border-slate-500",
+                    "border-2"
                 )}
             >
-                <Check
-                    size={s.icon}
-                    className={cn(
-                        "absolute inset-0 m-auto text-white transition-all duration-200",
-                        checked ? "opacity-100 scale-100" : "opacity-0 scale-50"
-                    )}
-                    strokeWidth={3}
-                />
-
-                {/* Ripple effect on check */}
-                <div
-                    className={cn(
-                        "absolute inset-0 rounded-md bg-indigo-400 transition-all duration-300",
-                        checked ? "animate-ping opacity-0" : "opacity-0"
-                    )}
-                />
+                <div className={cn(
+                    "absolute inset-0 flex items-center justify-center transition-all duration-200",
+                    checked ? "opacity-100 scale-100" : "opacity-0 scale-75"
+                )}>
+                    <Check
+                        size={s.icon}
+                        className="text-white"
+                        strokeWidth={3}
+                    />
+                </div>
             </button>
 
             {(label || description) && (
-                <div className="flex flex-col gap-0.5 select-none">
+                <div className="flex flex-col gap-0.5">
                     {label && (
-                        <span className="text-sm font-medium text-slate-200 group-hover:text-slate-100 transition-colors">
+                        <span className="text-sm font-medium text-slate-200 group-hover:text-slate-100 transition-colors leading-tight">
                             {label}
                         </span>
                     )}
                     {description && (
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-slate-500 leading-tight">
                             {description}
                         </span>
                     )}
@@ -102,13 +97,13 @@ export function Toggle({ checked, onChange, label, description, disabled = false
     return (
         <label
             className={cn(
-                "flex items-center justify-between gap-4 cursor-pointer group",
+                "flex items-center justify-between gap-4 cursor-pointer group select-none",
                 disabled && "cursor-not-allowed opacity-50",
                 className
             )}
         >
             {(label || description) && (
-                <div className="flex flex-col gap-0.5 select-none">
+                <div className="flex flex-col gap-0.5">
                     {label && (
                         <span className="text-sm font-medium text-slate-200">
                             {label}
@@ -130,15 +125,15 @@ export function Toggle({ checked, onChange, label, description, disabled = false
                 disabled={disabled}
                 className={cn(
                     "relative h-6 w-11 shrink-0 rounded-full transition-all duration-300",
-                    "focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 focus:ring-offset-slate-950",
+                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950",
                     checked
-                        ? "bg-gradient-to-r from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/30"
+                        ? "bg-indigo-600"
                         : "bg-slate-700"
                 )}
             >
                 <span
                     className={cn(
-                        "absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-md transition-all duration-300",
+                        "absolute top-1 left-1 h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-200",
                         checked && "translate-x-5"
                     )}
                 />

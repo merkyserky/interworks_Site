@@ -10,6 +10,7 @@ import { Textarea } from '@panel/components/ui/textarea'
 import { ConfirmModal } from '@panel/components/ui/confirm-modal'
 import { Select } from '@panel/components/ui/select'
 import { Toggle } from '@panel/components/ui/checkbox'
+import { useNotify } from '@panel/components/ui/toast'
 
 interface NotificationsViewProps {
     notifications: Notification[];
@@ -18,12 +19,14 @@ interface NotificationsViewProps {
 }
 
 export function NotificationsView({ notifications, games, onUpdate }: NotificationsViewProps) {
+    const notify = useNotify();
     const [search, setSearch] = useState('')
     const [editingNotif, setEditingNotif] = useState<Partial<Notification> | null>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [deleteTarget, setDeleteTarget] = useState<Notification | null>(null)
     const [isConfirmOpen, setIsConfirmOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
 
     // Fixed: Added null/undefined checks to prevent toLowerCase errors
     const filtered = notifications.filter(n =>
@@ -31,16 +34,27 @@ export function NotificationsView({ notifications, games, onUpdate }: Notificati
     );
 
     const save = async () => {
-        if (!editingNotif) return;
+        if (!editingNotif || !editingNotif.title) {
+            notify.error('Please enter a title');
+            return;
+        }
+
+        setIsSaving(true);
         try {
             if (editingNotif.id) {
                 await api.put(`/api/announcements/${editingNotif.id}`, editingNotif);
+                notify.success(`"${editingNotif.title}" updated successfully`);
             } else {
                 await api.post('/api/announcements', editingNotif);
+                notify.success(`"${editingNotif.title}" created successfully`);
             }
             setIsModalOpen(false);
             onUpdate();
-        } catch (e) { alert(e); }
+        } catch (e) {
+            notify.error('Failed to save announcement: ' + e);
+        } finally {
+            setIsSaving(false);
+        }
     }
 
     const handleDeleteClick = (notif: Notification) => {
@@ -53,11 +67,12 @@ export function NotificationsView({ notifications, games, onUpdate }: Notificati
         setIsDeleting(true);
         try {
             await api.delete(`/api/announcements/${deleteTarget.id}`);
+            notify.success(`"${deleteTarget.title}" deleted`);
             setIsConfirmOpen(false);
             setDeleteTarget(null);
             onUpdate();
         } catch (e) {
-            alert(e);
+            notify.error('Failed to delete announcement: ' + e);
         } finally {
             setIsDeleting(false);
         }
@@ -69,26 +84,27 @@ export function NotificationsView({ notifications, games, onUpdate }: Notificati
     ];
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between gap-4">
+        <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                 <div className="relative flex-1 max-w-md">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
                     <Input placeholder="Search announcements..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-slate-900 border-slate-800" />
                 </div>
-                <Button onClick={() => { setEditingNotif({ active: true, gameId: games[0]?.id || '', title: '', description: '' }); setIsModalOpen(true); }} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2">
+                <Button onClick={() => { setEditingNotif({ active: true, gameId: games[0]?.id || '', title: '', description: '' }); setIsModalOpen(true); }} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 w-full sm:w-auto">
                     <Plus size={16} /> Add Announcement
                 </Button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
                 {filtered.map(notif => (
                     <Card key={notif.id} className="bg-slate-900/50 border-slate-800 hover:border-indigo-500/20 transition-all">
-                        <CardContent className="p-4 flex flex-col md:flex-row gap-4 items-start md:items-center">
-                            <div className="h-12 w-12 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0">
-                                <Bell size={24} />
+                        <CardContent className="p-3 sm:p-4 flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center">
+                            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0">
+                                <Bell size={20} className="sm:hidden" />
+                                <Bell size={24} className="hidden sm:block" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
                                     <h3 className="font-bold text-slate-100 truncate">{notif.title || 'Untitled'}</h3>
                                     {notif.active ? (
                                         <span className="bg-emerald-500/10 text-emerald-400 text-[10px] px-2 py-0.5 rounded uppercase font-bold">Active</span>
@@ -104,9 +120,9 @@ export function NotificationsView({ notifications, games, onUpdate }: Notificati
                                     </div>
                                 )}
                             </div>
-                            <div className="flex items-center gap-2 shrink-0 ml-auto">
-                                <Button size="sm" variant="outline" className="gap-1" onClick={() => { setEditingNotif({ ...notif }); setIsModalOpen(true); }}>
-                                    <Edit size={14} /> Edit
+                            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end sm:justify-start">
+                                <Button size="sm" variant="outline" className="gap-1 flex-1 sm:flex-none" onClick={() => { setEditingNotif({ ...notif }); setIsModalOpen(true); }}>
+                                    <Edit size={14} /> <span className="sm:hidden">Edit</span>
                                 </Button>
                                 <Button size="sm" variant="ghost" className="text-slate-500 hover:text-red-400" onClick={() => handleDeleteClick(notif)}>
                                     <Trash2 size={16} />
@@ -125,8 +141,10 @@ export function NotificationsView({ notifications, games, onUpdate }: Notificati
                 title={editingNotif?.id ? "Edit Announcement" : "New Announcement"}
                 footer={
                     <>
-                        <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                        <Button onClick={save} className="bg-indigo-600 hover:bg-indigo-700">Save</Button>
+                        <Button variant="ghost" onClick={() => setIsModalOpen(false)} disabled={isSaving}>Cancel</Button>
+                        <Button onClick={save} className="bg-indigo-600 hover:bg-indigo-700" disabled={isSaving}>
+                            {isSaving ? 'Saving...' : 'Save'}
+                        </Button>
                     </>
                 }
             >

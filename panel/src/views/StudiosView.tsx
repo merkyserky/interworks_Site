@@ -8,6 +8,7 @@ import { Modal } from '@panel/components/ui/modal'
 import { Label } from '@panel/components/ui/label'
 import { Textarea } from '@panel/components/ui/textarea'
 import { ConfirmModal } from '@panel/components/ui/confirm-modal'
+import { useNotify } from '@panel/components/ui/toast'
 
 interface StudiosViewProps {
     studios: Studio[];
@@ -16,12 +17,14 @@ interface StudiosViewProps {
 }
 
 export function StudiosView({ studios, currentUser, onUpdate }: StudiosViewProps) {
+    const notify = useNotify();
     const [search, setSearch] = useState('')
     const [editingStudio, setEditingStudio] = useState<Partial<Studio> | null>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [deleteTarget, setDeleteTarget] = useState<Studio | null>(null)
     const [isConfirmOpen, setIsConfirmOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
 
     const isAdmin = currentUser?.role === 'admin';
 
@@ -31,20 +34,29 @@ export function StudiosView({ studios, currentUser, onUpdate }: StudiosViewProps
     );
 
     const saveStudio = async () => {
-        if (!editingStudio) return;
+        if (!editingStudio || !editingStudio.name) {
+            notify.error('Please enter a studio name');
+            return;
+        }
+
+        setIsSaving(true);
         try {
             const isUpdate = studios.some(s => s.id === editingStudio.id);
 
             if (isUpdate) {
                 await api.put(`/api/studios/${editingStudio.id}`, editingStudio);
+                notify.success(`"${editingStudio.name}" updated successfully`);
             } else {
                 if (!editingStudio.id) editingStudio.id = editingStudio.name?.toLowerCase().replace(/[^a-z0-9]/g, '-');
                 await api.post('/api/studios', editingStudio);
+                notify.success(`"${editingStudio.name}" created successfully`);
             }
             setIsModalOpen(false);
             onUpdate();
         } catch (e) {
-            alert(e);
+            notify.error('Failed to save studio: ' + e);
+        } finally {
+            setIsSaving(false);
         }
     }
 
@@ -58,11 +70,12 @@ export function StudiosView({ studios, currentUser, onUpdate }: StudiosViewProps
         setIsDeleting(true);
         try {
             await api.delete(`/api/studios/${deleteTarget.id}`);
+            notify.success(`"${deleteTarget.name}" deleted`);
             setIsConfirmOpen(false);
             setDeleteTarget(null);
             onUpdate();
         } catch (e) {
-            alert(e);
+            notify.error('Failed to delete studio: ' + e);
         } finally {
             setIsDeleting(false);
         }
@@ -74,26 +87,26 @@ export function StudiosView({ studios, currentUser, onUpdate }: StudiosViewProps
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between gap-4">
+        <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                 <div className="relative flex-1 max-w-md">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
                     <Input placeholder="Search studios..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-slate-900 border-slate-800" />
                 </div>
-                <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2">
+                <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 w-full sm:w-auto">
                     <Plus size={16} /> Add Studio
                 </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {filtered.map(studio => (
                     <Card key={studio.id} className="bg-slate-900/50 border-slate-800 hover:border-indigo-500/30 transition-all">
-                        <CardContent className="p-6">
+                        <CardContent className="p-4 sm:p-6">
                             <div className="flex items-start justify-between mb-4">
-                                <div className="h-12 w-12 rounded-lg bg-slate-800 overflow-hidden flex items-center justify-center">
+                                <div className="h-12 w-12 rounded-lg bg-slate-800 overflow-hidden flex items-center justify-center shrink-0">
                                     {studio.logo ? <img src={studio.logo} className="w-full h-full object-cover" /> : <span className="text-xl font-bold text-slate-500">{(studio.name || 'S')[0]}</span>}
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex gap-1 sm:gap-2">
                                     <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-slate-800" onClick={() => { setEditingStudio({ ...studio }); setIsModalOpen(true); }}>
                                         <Edit size={16} className="text-slate-400" />
                                     </Button>
@@ -116,7 +129,7 @@ export function StudiosView({ studios, currentUser, onUpdate }: StudiosViewProps
                             <h3 className="text-lg font-bold text-slate-100 mb-1">{studio.name}</h3>
                             <p className="text-sm text-slate-500 line-clamp-2">{studio.description}</p>
 
-                            <div className="mt-4 flex gap-2">
+                            <div className="mt-4 flex flex-wrap gap-2">
                                 {studio.discord && <a href={studio.discord} target="_blank" className="text-xs bg-[#5865F2]/10 text-[#5865F2] px-2 py-1 rounded hover:bg-[#5865F2]/20">Discord</a>}
                                 {studio.roblox && <a href={studio.roblox} target="_blank" className="text-xs bg-white/10 text-white px-2 py-1 rounded hover:bg-white/20">Roblox</a>}
                             </div>
@@ -126,7 +139,7 @@ export function StudiosView({ studios, currentUser, onUpdate }: StudiosViewProps
             </div>
 
             {filtered.length === 0 && (
-                <div className="text-center py-20 text-slate-600">
+                <div className="text-center py-16 sm:py-20 text-slate-600">
                     No studios found matching your search.
                 </div>
             )}
@@ -138,8 +151,10 @@ export function StudiosView({ studios, currentUser, onUpdate }: StudiosViewProps
                 title={editingStudio?.id && studios.some(s => s.id === editingStudio.id) ? "Edit Studio" : "New Studio"}
                 footer={
                     <>
-                        <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                        <Button onClick={saveStudio} className="bg-indigo-600 hover:bg-indigo-700">Save</Button>
+                        <Button variant="ghost" onClick={() => setIsModalOpen(false)} disabled={isSaving}>Cancel</Button>
+                        <Button onClick={saveStudio} className="bg-indigo-600 hover:bg-indigo-700" disabled={isSaving}>
+                            {isSaving ? 'Saving...' : 'Save'}
+                        </Button>
                     </>
                 }
             >

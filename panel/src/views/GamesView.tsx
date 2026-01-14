@@ -10,6 +10,7 @@ import { Textarea } from '@panel/components/ui/textarea'
 import { ConfirmModal } from '@panel/components/ui/confirm-modal'
 import { Select } from '@panel/components/ui/select'
 import { Checkbox } from '@panel/components/ui/checkbox'
+import { useNotify } from '@panel/components/ui/toast'
 import { cn } from '@panel/lib/utils'
 
 interface GamesViewProps {
@@ -20,12 +21,14 @@ interface GamesViewProps {
 }
 
 export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewProps) {
+    const notify = useNotify();
     const [search, setSearch] = useState('')
     const [editingGame, setEditingGame] = useState<Partial<Game> | null>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [deleteTarget, setDeleteTarget] = useState<Game | null>(null)
     const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
 
     const isAdmin = currentUser?.role === 'admin';
 
@@ -37,18 +40,26 @@ export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewPr
     });
 
     const handleSave = async () => {
-        if (!editingGame || !editingGame.name) return;
+        if (!editingGame || !editingGame.name) {
+            notify.error('Please enter a game name');
+            return;
+        }
 
+        setIsSaving(true);
         try {
             if (editingGame.id) {
                 await api.put(`/api/games/${editingGame.id}`, editingGame);
+                notify.success(`"${editingGame.name}" updated successfully`);
             } else {
                 await api.post('/api/games', editingGame);
+                notify.success(`"${editingGame.name}" created successfully`);
             }
             setIsModalOpen(false);
             onUpdate();
         } catch (error) {
-            alert('Failed to save game: ' + error);
+            notify.error('Failed to save game: ' + error);
+        } finally {
+            setIsSaving(false);
         }
     }
 
@@ -62,11 +73,12 @@ export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewPr
         setIsDeleting(true);
         try {
             await api.delete(`/api/games/${deleteTarget.id}`);
+            notify.success(`"${deleteTarget.name}" deleted`);
             setIsConfirmOpen(false);
             setDeleteTarget(null);
             onUpdate();
         } catch (error) {
-            alert('Failed to delete: ' + error);
+            notify.error('Failed to delete: ' + error);
         } finally {
             setIsDeleting(false);
         }
@@ -99,8 +111,8 @@ export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewPr
     const studioOptions = studios.map(s => ({ value: s.name, label: s.name }));
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between gap-4">
+        <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                 <div className="relative flex-1 max-w-md">
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
                     <Input
@@ -110,12 +122,12 @@ export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewPr
                         className="pl-9 bg-slate-900 border-slate-800"
                     />
                 </div>
-                <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2">
+                <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 w-full sm:w-auto">
                     <Plus size={16} /> Add Game
                 </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {filteredGames.map(game => (
                     <Card key={game.id} className="group overflow-hidden bg-slate-900/50 border-slate-800 hover:border-indigo-500/50 transition-all">
                         <div className="aspect-video w-full overflow-hidden bg-slate-800 relative">
@@ -138,27 +150,27 @@ export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewPr
                                 </span>
                             </div>
                         </div>
-                        <CardContent className="p-4">
+                        <CardContent className="p-3 sm:p-4">
                             <h3 className="font-bold text-slate-100 truncate">{game.name}</h3>
                             <p className="text-xs text-slate-500 truncate mb-3">{game.ownedBy || 'No studio'}</p>
-                            <div className="flex justify-between items-center mt-4 pt-3 border-t border-slate-800/50">
+                            <div className="flex justify-between items-center mt-3 sm:mt-4 pt-3 border-t border-slate-800/50">
                                 {isAdmin ? (
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="text-xs h-7 hover:text-red-400 hover:bg-red-950/30"
+                                        className="text-xs h-8 hover:text-red-400 hover:bg-red-950/30"
                                         onClick={() => handleDeleteClick(game)}
                                         disabled={isDeleting}
                                     >
-                                        <Trash2 size={12} className="mr-1" /> Remove
+                                        <Trash2 size={14} className="mr-1" /> Remove
                                     </Button>
                                 ) : (
                                     <div className="flex items-center gap-1 text-xs text-slate-600">
                                         <ShieldAlert size={12} />
-                                        <span>Admin only</span>
+                                        <span className="hidden sm:inline">Admin only</span>
                                     </div>
                                 )}
-                                <Button variant="outline" size="sm" className="text-xs h-7 border-slate-700 hover:bg-slate-800" onClick={() => openEdit(game)}>
+                                <Button variant="outline" size="sm" className="text-xs h-8 border-slate-700 hover:bg-slate-800" onClick={() => openEdit(game)}>
                                     Manage
                                 </Button>
                             </div>
@@ -168,7 +180,7 @@ export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewPr
             </div>
 
             {filteredGames.length === 0 && (
-                <div className="text-center py-20 text-slate-600">
+                <div className="text-center py-16 sm:py-20 text-slate-600">
                     No games found matching your search.
                 </div>
             )}
@@ -180,8 +192,10 @@ export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewPr
                 title={editingGame?.id ? "Edit Game" : "New Game"}
                 footer={(
                     <>
-                        <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                        <Button onClick={handleSave} className="bg-indigo-600 hover:bg-indigo-700">Save Changes</Button>
+                        <Button variant="ghost" onClick={() => setIsModalOpen(false)} disabled={isSaving}>Cancel</Button>
+                        <Button onClick={handleSave} className="bg-indigo-600 hover:bg-indigo-700" disabled={isSaving}>
+                            {isSaving ? 'Saving...' : 'Save Changes'}
+                        </Button>
                     </>
                 )}
             >
@@ -191,7 +205,7 @@ export function GamesView({ games, studios, currentUser, onUpdate }: GamesViewPr
                         <Input value={editingGame?.name || ''} onChange={e => setEditingGame(prev => ({ ...prev!, name: e.target.value }))} />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>Status</Label>
                             <Select

@@ -47,6 +47,30 @@
     }
 }
 
+@keyframes slide-in-right {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slide-out-right {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
 @keyframes spin {
     to {
         transform: rotate(360deg);
@@ -59,6 +83,18 @@
     100% {
         transform: scale(2);
         opacity: 0;
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
     }
 }
 
@@ -85,6 +121,14 @@
     animation-name: slide-in-from-bottom-2;
 }
 
+.animate-slide-in-right {
+    animation: slide-in-right 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.animate-slide-out-right {
+    animation: slide-out-right 0.3s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
 .animate-spin {
     animation: spin 1s linear infinite;
 }
@@ -97,16 +141,55 @@
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-@keyframes pulse {
+/* Floating animations for Media view */
+@keyframes float-slow {
 
     0%,
     100% {
-        opacity: 1;
+        transform: translateY(0) rotate(0deg);
     }
 
     50% {
-        opacity: 0.5;
+        transform: translateY(-8px) rotate(3deg);
     }
+}
+
+@keyframes float-medium {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-6px) rotate(-2deg);
+    }
+}
+
+@keyframes float-fast {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-4px) rotate(2deg);
+    }
+}
+
+.animate-float-slow {
+    animation: float-slow 4s ease-in-out infinite;
+}
+
+.animate-float-medium {
+    animation: float-medium 3s ease-in-out infinite;
+    animation-delay: 0.5s;
+}
+
+.animate-float-fast {
+    animation: float-fast 2.5s ease-in-out infinite;
+    animation-delay: 1s;
 }
 
 /* Duration modifiers */
@@ -128,7 +211,31 @@
     display: none;
 }
 
-/* Utility classes for the custom components */
+/* Better scrollbar for content areas */
+.scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #334155 transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #334155;
+    border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: #475569;
+}
+
+/* Utility classes */
 .tabular-nums {
     font-variant-numeric: tabular-nums;
 }
@@ -136,4 +243,142 @@
 /* Selection color */
 ::selection {
     background-color: rgba(99, 102, 241, 0.3);
+}
+
+/* Light mode support */
+.light {
+    color-scheme: light;
+}
+
+.light .bg-slate-950 {
+    background-color: #f8fafc;
+}
+
+.light .bg-slate-900 {
+    background-color: #f1f5f9;
+}
+
+.light .bg-slate-900\/50 {
+    background-color: rgba(241, 245, 249, 0.5);
+}
+
+.light .bg-\[\#0a0a0a\] {
+    background-color: #f1f5f9;
+}
+
+.light .text-slate-50 {
+    color: #0f172a;
+}
+
+.light .text-slate-100 {
+    color: #1e293b;
+}
+
+.light .text-slate-200 {
+    color: #334155;
+}
+
+.light .text-slate-300 {
+    color: #475569;
+}
+
+.light .text-slate-400 {
+    color: #64748b;
+}
+
+.light .text-slate-500 {
+    color: #94a3b8;
+}
+
+.light .border-slate-800 {
+    border-color: #e2e8f0;
+}
+
+.light .bg-slate-950\/80 {
+    background-color: rgba(248, 250, 252, 0.8);
+}
+
+.light .bg-slate-950\/50 {
+    background-color: rgba(248, 250, 252, 0.5);
+}
+
+.light .bg-slate-800 {
+    background-color: #e2e8f0;
+}
+
+.light .bg-slate-800\/50 {
+    background-color: rgba(226, 232, 240, 0.5);
+}
+
+.light .hover\:bg-slate-800:hover {
+    background-color: #e2e8f0;
+}
+
+.light .hover\:bg-slate-800\/50:hover {
+    background-color: rgba(226, 232, 240, 0.5);
+}
+
+/* Mobile-first improvements */
+@media (max-width: 640px) {
+
+    /* Better touch targets */
+    button,
+    a {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Larger text on mobile */
+    .text-xs {
+        font-size: 0.8125rem;
+    }
+
+    /* Improve modal on mobile */
+    .fixed.inset-0 .max-w-lg {
+        max-width: calc(100vw - 2rem);
+        max-height: calc(100vh - 2rem);
+    }
+
+    /* Better spacing on mobile */
+    .p-6 {
+        padding: 1rem;
+    }
+
+    .gap-6 {
+        gap: 1rem;
+    }
+}
+
+/* Safe area insets for mobile */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .pt-safe {
+        padding-top: env(safe-area-inset-top);
+    }
+}
+
+/* Prevent text selection on interactive elements */
+button,
+[role="button"] {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Better focus styles */
+:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+}
+
+/* Remove default focus outline */
+:focus:not(:focus-visible) {
+    outline: none;
 }

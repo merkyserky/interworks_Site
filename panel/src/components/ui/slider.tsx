@@ -1,4 +1,3 @@
-import * as React from "react"
 import { cn } from "@panel/lib/utils"
 
 interface SliderProps {
@@ -24,50 +23,11 @@ export function Slider({
     className,
     label
 }: SliderProps) {
-    const trackRef = React.useRef<HTMLDivElement>(null);
-    const [isDragging, setIsDragging] = React.useState(false);
-
     const percentage = ((value - min) / (max - min)) * 100;
 
-    const handleTrackClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (disabled || !trackRef.current) return;
-        const rect = trackRef.current.getBoundingClientRect();
-        const percent = (e.clientX - rect.left) / rect.width;
-        const newValue = min + percent * (max - min);
-        const steppedValue = Math.round(newValue / step) * step;
-        onChange(Math.max(min, Math.min(max, steppedValue)));
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        onChange(Number(e.target.value));
     };
-
-    const handleMouseDown = (e: React.MouseEvent) => {
-        if (disabled) return;
-        e.preventDefault();
-        setIsDragging(true);
-    };
-
-    React.useEffect(() => {
-        if (!isDragging) return;
-
-        const handleMouseMove = (e: MouseEvent) => {
-            if (!trackRef.current) return;
-            const rect = trackRef.current.getBoundingClientRect();
-            const percent = (e.clientX - rect.left) / rect.width;
-            const newValue = min + percent * (max - min);
-            const steppedValue = Math.round(newValue / step) * step;
-            onChange(Math.max(min, Math.min(max, steppedValue)));
-        };
-
-        const handleMouseUp = () => {
-            setIsDragging(false);
-        };
-
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
-
-        return () => {
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-        };
-    }, [isDragging, min, max, step, onChange]);
 
     return (
         <div className={cn("flex flex-col gap-2", className)}>
@@ -75,43 +35,45 @@ export function Slider({
                 <div className="flex justify-between items-center">
                     {label && <span className="text-sm text-slate-400">{label}</span>}
                     {showValue && (
-                        <span className="text-sm font-medium text-indigo-400 tabular-nums">
+                        <span className="text-sm font-medium text-indigo-400 tabular-nums min-w-[3ch] text-right">
                             {value}
                         </span>
                     )}
                 </div>
             )}
-            <div
-                ref={trackRef}
-                onClick={handleTrackClick}
-                className={cn(
-                    "relative h-2 w-full rounded-full bg-slate-800 cursor-pointer group",
-                    disabled && "opacity-50 cursor-not-allowed"
-                )}
-            >
+            <div className="relative h-6 flex items-center">
+                {/* Track background */}
+                <div className="absolute inset-x-0 h-2 rounded-full bg-slate-800" />
+
                 {/* Filled track */}
                 <div
-                    className="absolute h-full rounded-full bg-gradient-to-r from-indigo-600 to-violet-500 transition-all duration-100"
+                    className="absolute left-0 h-2 rounded-full bg-indigo-600 pointer-events-none"
                     style={{ width: `${percentage}%` }}
                 />
 
-                {/* Thumb */}
-                <div
-                    onMouseDown={handleMouseDown}
+                {/* Native input for accessibility - styled to be invisible but functional */}
+                <input
+                    type="range"
+                    min={min}
+                    max={max}
+                    step={step}
+                    value={value}
+                    onChange={handleChange}
+                    disabled={disabled}
                     className={cn(
-                        "absolute top-1/2 -translate-y-1/2 -translate-x-1/2 h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-100",
-                        "border-2 border-indigo-500",
-                        !disabled && "hover:scale-110 active:scale-95",
-                        isDragging && "scale-110 shadow-xl shadow-indigo-500/30",
-                        "group-hover:shadow-lg group-hover:shadow-indigo-500/20"
+                        "absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10",
+                        disabled && "cursor-not-allowed"
+                    )}
+                />
+
+                {/* Custom thumb */}
+                <div
+                    className={cn(
+                        "absolute h-5 w-5 rounded-full bg-white shadow-lg border-2 border-indigo-500 pointer-events-none transition-transform",
+                        "transform -translate-x-1/2",
+                        disabled && "opacity-50"
                     )}
                     style={{ left: `${percentage}%` }}
-                />
-
-                {/* Glow effect on track */}
-                <div
-                    className="absolute h-full rounded-full bg-indigo-500/20 blur-sm pointer-events-none"
-                    style={{ width: `${percentage}%` }}
                 />
             </div>
         </div>
