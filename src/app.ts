@@ -15,6 +15,15 @@ import { trackEvent } from '@components/ShareModal'
 interface SpotifyAlbum { name: string; spotifyId: string; }
 interface GameNotification { id: string; gameId: string; title: string; description: string; countdownTo?: string; youtubeVideoId?: string; link?: string; active: boolean; }
 
+// Generate a URL-friendly slug from game name or ID
+function generateGameSlug(game: { id: string; name: string }): string {
+    const slug = game.name.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+    return slug || game.id;
+}
+
 // Event types
 type EventIcon = 'rocket' | 'star' | 'calendar' | 'clock' | 'gift' | 'fire' | 'sparkles' | 'trophy';
 interface GameEvent {
@@ -367,10 +376,14 @@ function createGamesModal(): HTMLElement {
                  <div class="flex flex-wrap gap-1.5 mb-4">
                      ${g.genres.slice(0, 3).map(gen => `<span class="text-[10px] px-2 py-1 bg-white/5 rounded-md text-gray-400 border border-white/5 font-medium">${gen}</span>`).join('')}
                  </div>
-                 ${g.link ? `<a href="${g.link}" target="_blank" class="block w-full text-center py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-xl transition-all text-sm font-bold shadow-lg shadow-violet-900/30 hover:shadow-violet-900/50 hover:scale-[1.02]">Play Now</a>` : ''}
-             </div>
-        </div>
-    `).join('')
+                  <div class="flex gap-3 w-full mt-auto pt-2">
+                      ${g.link ? `<a href="${g.link}" target="_blank" class="flex-1 block w-full text-center py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-xl transition-all text-sm font-bold shadow-lg shadow-violet-900/30 hover:shadow-violet-900/50 hover:scale-[1.02]">Play Now</a>` : ''}
+                      <button onclick="window.openGameDetail({id: '${g.id}', name: '${g.name.replace(/'/g, "\\'")}', logo: '${g.logo}', description: '${(g.description || '').replace(/'/g, "\\'")}', ownedBy: '${g.ownedBy}', status: '${g.status}', genres: [${g.genres.map(x => `'${x}'`).join(',')}], link: '${g.link || ''}', youtubeVideoId: '${g.youtubeVideoId || ''}', thumbnails: [${(g.thumbnails || []).map(x => `'${x}'`).join(',')}] })" class="flex-1 block w-full text-center py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all text-sm font-bold border border-white/10">More Details</button>
+                  </div>
+                  </div>
+              </div>
+         </div>
+     `).join('')
 
     modal.innerHTML = `
         <div class="absolute inset-0 bg-black/85 backdrop-blur-lg" onclick="window.closeGamesModal()"></div>
@@ -739,6 +752,19 @@ export async function initApp(): Promise<void> {
     trackEvent('pageview')
 
     console.log("ASTRAL CORE + INTERWORKS INC - Site Loaded")
+
+    // Direct Routing check
+    const path = window.location.pathname.substring(1); // remove leading slash
+    if (path && games.length > 0) {
+        const matchingGame = games.find(g => generateGameSlug(g) === path || g.id === path);
+        if (matchingGame) {
+            console.log("Found direct route for game:", matchingGame.name);
+            setTimeout(() => {
+                const gameDetail = convertGame(matchingGame);
+                (window as any).openGameDetail(gameDetail);
+            }, 500); // Small delay to allow UI to settle
+        }
+    }
 }
 
 // Show loading skeleton immediately
@@ -747,6 +773,11 @@ onDOMReady(() => {
     if (app) {
         app.appendChild(createLoadingSkeleton())
     }
+
+    // Handle initial routing (Direct to Game Detail)
+    // We do this BEFORE initApp starts fully rendering, but we need data first.
+    // So we'll move this into initApp after data fetch.
+
     enableViewTransitions()
     initApp()
 })

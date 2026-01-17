@@ -61,23 +61,21 @@ export function openShareModal(config: ShareModalConfig): void {
             
             <!-- Content -->
             <div class="p-8">
-                <!-- Game Card Preview -->
-                <div class="relative overflow-hidden rounded-2xl border border-white/10 bg-black/50 mb-8 group">
-                    <!-- Background with Blur -->
-                    <div class="absolute inset-0 bg-cover bg-center opacity-30 blur-xl scale-125" style="background-image: url('${thumbnail || '/placeholder_hero.png'}')"></div>
+                <!-- Game Card Preview (Logo over Thumbnail) -->
+                <div class="relative w-full aspect-video rounded-2xl border border-white/10 overflow-hidden mb-8 group shadow-2xl">
+                    <!-- Background Thumbnail -->
+                    <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style="background-image: url('${thumbnail || '/placeholder_hero.png'}')"></div>
+                    <div class="absolute inset-0 bg-black/60 backdrop-blur-[2px]"></div>
                     
-                    <div class="relative z-10 p-5 flex items-center gap-5">
-                        <div class="w-20 h-20 shrink-0 rounded-2xl overflow-hidden border border-white/10 shadow-lg bg-black">
-                            ${thumbnail ? `<img src="${thumbnail}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center bg-violet-600 font-bold text-2xl">${game.name[0]}</div>`}
-                        </div>
-                        <div class="min-w-0">
-                            <h3 class="font-black text-white text-2xl leading-none mb-2 truncate">${game.name}</h3>
-                            <p class="text-xs font-medium text-violet-300 mb-1 flex items-center gap-1.5">
-                                <span class="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse"></span>
-                                ${window.location.hostname}/${gameSlug}
-                            </p>
-                            <p class="text-xs text-gray-400 line-clamp-1">${game.description || 'Check out this game!'}</p>
-                        </div>
+                    <!-- Centered Logo -->
+                    <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
+                        ${game.logo ?
+            `<img src="${game.logo}" alt="${game.name}" class="w-full max-w-[200px] h-auto object-contain drop-shadow-[0_0_15px_rgba(0,0,0,0.5)] transform transition-transform group-hover:scale-110 duration-500">` :
+            `<h3 class="font-black text-white text-3xl tracking-tighter uppercase drop-shadow-xl">${game.name}</h3>`
+        }
+                        <p class="mt-4 text-xs font-bold text-white/80 tracking-widest uppercase bg-black/50 px-3 py-1 rounded-full backdrop-blur-md border border-white/10">
+                            ${window.location.hostname}/${gameSlug}
+                        </p>
                     </div>
                 </div>
                 
@@ -87,17 +85,20 @@ export function openShareModal(config: ShareModalConfig): void {
                          onclick="window.shareToDiscord('${encodeURIComponent(shareUrl)}', '${encodeURIComponent(game.name)}', '')"
                          class="col-span-2 group relative flex items-center justify-center gap-3 py-4 px-6 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-2xl font-bold text-lg transition-all hover:translate-y-[-2px] shadow-lg shadow-[#5865F2]/20 hover:shadow-[#5865F2]/40"
                     >
-                        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037 13.486 13.486 0 00-.594 1.226c-2.176-.328-4.352-.328-6.505 0a13.482 13.482 0 00-.602-1.226.075.075 0 00-.079-.037A19.736 19.736 0 002.66 4.37a.072.072 0 00-.03.047C.612 10.976 1.765 17.58 4.295 21.054a.077.077 0 00.088.026 19.988 19.988 0 006.014-3.03.076.076 0 00.038-.052 14.167 14.167 0 01-2.261-1.077.073.073 0 01.002-.122 10.02 10.02 0 00.916-.445.075.075 0 01.078.006 14.28 14.28 0 004.977 1.018 14.285 14.285 0 004.982-1.018.075.075 0 01.078-.006 10.063 10.063 0 00.911.445.074.074 0 01.003.122 14.074 14.074 0 01-2.266 1.077.075.075 0 00.037.052 19.967 19.967 0 006.02 3.03.078.078 0 00.087-.026c2.617-3.593 3.738-10.292 1.638-16.637a.072.072 0 00-.03-.047z"/></svg>
+                        <!-- Fixed Discord Icon -->
+                        <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.0991.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.699.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.419-2.1568 2.419zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.419-2.1568 2.419z"/></svg>
                         <span>Share on Discord</span>
                         <div class="absolute right-4 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white animate-ping opacity-50"></div>
                     </button>
                     
                     <button onclick="window.shareToTwitter('${encodeURIComponent(shareUrl)}', '${encodeURIComponent(shareText)}')" class="flex flex-col items-center justify-center p-4 bg-black border border-white/10 hover:border-white/30 rounded-2xl hover:bg-zinc-900 transition-all group">
+                         <!-- X Logo -->
                          <svg class="w-6 h-6 text-white mb-2 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                          <span class="text-sm font-semibold text-gray-300 group-hover:text-white">X / Twitter</span>
                     </button>
                     
                      <button onclick="window.shareToReddit('${encodeURIComponent(shareUrl)}', '${encodeURIComponent(game.name)}')" class="flex flex-col items-center justify-center p-4 bg-[#FF4500]/10 border border-[#FF4500]/20 hover:bg-[#FF4500] hover:border-[#FF4500] rounded-2xl transition-all group">
+                         <!-- Reddit Logo -->
                          <svg class="w-6 h-6 text-[#FF4500] group-hover:text-white mb-2 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
                          <span class="text-sm font-semibold text-[#FF4500] group-hover:text-white">Reddit</span>
                     </button>
