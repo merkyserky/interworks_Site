@@ -72,7 +72,7 @@ export function createHero(config: HeroConfig): HTMLElement {
 
         const desc = document.createElement('p')
         desc.className = 'text-gray-300 text-base md:text-lg leading-relaxed'
-        desc.textContent = item.description
+        desc.innerHTML = item.description
         itemContent.appendChild(desc)
 
         contentElements.push(itemContent)

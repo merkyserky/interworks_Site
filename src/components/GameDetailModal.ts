@@ -4,6 +4,7 @@
  */
 
 import { createShareButtons } from './SiteEnhancements'
+import { parseRichText } from '../utils/text'
 
 interface SpotifyAlbum { name: string; spotifyId: string; }
 type EventIcon = 'rocket' | 'star' | 'calendar' | 'clock' | 'gift' | 'fire' | 'sparkles' | 'trophy';
@@ -130,7 +131,7 @@ export function openGameDetailModal(game: GameDetail): void {
                         </div>
                         
                         <!-- Description -->
-                        <p class="text-gray-300 leading-relaxed">${game.description || 'No description available.'}</p>
+                        <div class="text-gray-300 leading-relaxed">${parseRichText(game.description) || 'No description available.'}</div>
                         
                         <!-- Genres -->
                         ${game.genres && game.genres.length > 0 ? `

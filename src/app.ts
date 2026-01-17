@@ -6,6 +6,7 @@
 import { createHeader, createHero, createGamesSection, createHeroFooter, createPageFooter, createSocialModal } from '@components/index'
 import { initCarousel, type CarouselItem } from '@utils/carousel'
 import { onDOMReady } from '@utils/dom'
+import { parseRichText } from '@utils/text'
 import { createCookieConsent, createLoadingSkeleton, hideLoadingSkeleton, enableViewTransitions } from '@components/SiteEnhancements'
 import '@components/GameDetailModal' // Register global handlers
 import '@components/ShareModal' // Register share modal handlers
@@ -293,7 +294,7 @@ function createStudiosModal(): HTMLElement {
         }
             </div>
             <h3 class="text-white font-extrabold text-base text-center truncate px-1 group-hover:text-violet-300 transition-colors">${s.name}</h3>
-            ${s.description ? `<p class="text-xs text-gray-500 text-center mt-2 line-clamp-2 px-1 font-medium">${s.description}</p>` : ''}
+            ${s.description ? `<div class="text-[11px] text-gray-500 text-center mt-2 line-clamp-3 px-1 font-medium leading-relaxed">${parseRichText(s.description)}</div>` : ''}
             <div class="mt-3 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 ${s.discord ? '<div class="w-6 h-6 rounded-full bg-[#5865F2]/20 flex items-center justify-center"><svg class="w-3.5 h-3.5 text-[#5865F2]" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037 13.486 13.486 0 00-.594 1.226c-2.176-.328-4.352-.328-6.505 0a13.482 13.482 0 00-.602-1.226.075.075 0 00-.079-.037A19.736 19.736 0 002.66 4.37a.072.072 0 00-.03.047C.612 10.976 1.765 17.58 4.295 21.054a.077.077 0 00.088.026 19.988 19.988 0 006.014-3.03.076.076 0 00.038-.052 14.167 14.167 0 01-2.261-1.077.073.073 0 01.002-.122 10.02 10.02 0 00.916-.445.075.075 0 01.078.006 14.28 14.28 0 004.977 1.018 14.285 14.285 0 004.982-1.018.075.075 0 01.078-.006 10.063 10.063 0 00.911.445.074.074 0 01.003.122 14.074 14.074 0 01-2.266 1.077.075.075 0 00.037.052 19.967 19.967 0 006.02 3.03.078.078 0 00.087-.026c2.617-3.593 3.738-10.292 1.638-16.637a.072.072 0 00-.03-.047z"/></svg></div>' : ''}
                 ${s.youtube ? '<div class="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center"><svg class="w-3.5 h-3.5 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg></div>' : ''}
@@ -537,6 +538,25 @@ function toggleNotificationModal() {
         document.getElementById('notification-modal')?.classList.add('hidden')
     }
 
+    ; (window as any).openSocials = (_studioName?: string) => {
+        // Open the social modal component. 
+        // If studioName is provided, it opens the modal which lists all studios.
+        (window as any).openSocialModal();
+    }
+
+    ; (window as any).openGameDetailBySlug = (slug: string) => {
+        // Find game by slug or ID
+        const matchingGame = games.find(g => generateGameSlug(g) === slug || g.id === slug);
+        if (matchingGame) {
+            // Close modals that might be overlaying
+            (window as any).closeStudiosModal();
+            (window as any).closeSearchModal();
+            (window as any).openGameDetail(convertGame(matchingGame));
+        } else {
+            console.warn(`Game with slug/id "${slug}" not found.`);
+        }
+    }
+
 // Global Search Logic
 let searchModalOpen = false
 
@@ -604,7 +624,7 @@ function handleGlobalSearch(query: string) {
                                 ${g.logo ? `<img src="${g.logo}" class="w-12 h-12 object-contain rounded-lg bg-black/50 p-1">` : `<div class="w-12 h-12 bg-violet-600 rounded-lg flex items-center justify-center font-bold text-white">${g.name[0]}</div>`}
                                 <div>
                                     <h5 class="text-white font-bold group-hover:text-violet-400 transition-colors">${g.name}</h5>
-                                    <p class="text-xs text-gray-500 line-clamp-1">${g.ownedBy}</p>
+                                    <p class="text-[10px] text-gray-500 line-clamp-1">${parseRichText(g.ownedBy)}</p>
                                 </div>
                             </div>
                         `).join('')}
@@ -617,13 +637,16 @@ function handleGlobalSearch(query: string) {
             html += `
                 <div>
                     <h4 class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">Studios</h4>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         ${matchingStudios.map(s => `
-                            <div class="p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer border border-white/5 hover:border-white/10 text-center group" onclick="window.openSocials('${s.name}'); window.closeSearchModal();">
-                                <div class="w-12 h-12 mx-auto rounded-full bg-gradient-to-br from-gray-700 to-gray-900 mb-3 overflow-hidden flex items-center justify-center">
-                                     ${s.logo ? `<img src="${s.logo}" class="w-full h-full object-cover">` : `<span class="text-xs text-white font-bold">${s.name.substring(0, 2).toUpperCase()}</span>`}
+                            <div class="p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer border border-white/5 hover:border-white/10 group" onclick="window.openSocials('${s.name}'); window.closeSearchModal();">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-700 to-gray-900 overflow-hidden flex items-center justify-center">
+                                         ${s.logo ? `<img src="${s.logo}" class="w-full h-full object-cover">` : `<span class="text-xs text-white font-bold">${s.name.substring(0, 2).toUpperCase()}</span>`}
+                                    </div>
+                                    <h5 class="text-white text-sm font-bold group-hover:text-violet-400 transition-colors">${s.name}</h5>
                                 </div>
-                                <h5 class="text-white text-sm font-bold group-hover:text-violet-400 transition-colors">${s.name}</h5>
+                                <div class="text-[10px] text-gray-500 line-clamp-2">${parseRichText(s.description)}</div>
                             </div>
                         `).join('')}
                     </div>
@@ -808,7 +831,7 @@ export async function initApp(): Promise<void> {
             logo: s.logo ? { type: 'image', value: s.logo, alt: s.name } : { type: 'text', value: s.name.toUpperCase() },
             heroBackground: s.thumbnail || (s.media && s.media.length > 0 ? s.media[0] : '/placeholder_hero.png'), // Fallback if no thumbnail
             title: s.name.toUpperCase(),
-            description: s.description || ''
+            description: parseRichText(s.description || '')
         }))
 
     // Default fallback if no studios found/hero enabled
@@ -856,8 +879,6 @@ export async function initApp(): Promise<void> {
             link.addEventListener('click', (e) => { e.preventDefault(); (window as any).toggleStudiosModal(); })
         }
     })
-
-    app.appendChild(header)
 
     app.appendChild(header)
 
