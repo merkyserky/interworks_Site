@@ -98,7 +98,7 @@ export function createLoadingSkeleton(): HTMLElement {
                 <div class="h-2 w-48 bg-white/10 rounded-full mx-auto animate-pulse"></div>
                 <div class="h-2 w-32 bg-white/5 rounded-full mx-auto animate-pulse" style="animation-delay: 0.1s"></div>
             </div>
-            <p class="text-sm text-gray-500 animate-pulse">Loading experience...</p>
+            <p class="text-sm text-gray-500 animate-pulse">Loading Astral Core...</p>
         </div>
     `;
 
