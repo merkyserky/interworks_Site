@@ -532,6 +532,125 @@ function toggleNotificationModal() {
     ; (window as any).closeGamesModal = () => { gamesModalOpen = false; document.getElementById('games-modal')?.classList.add('hidden') }
 
 
+    ; (window as any).closeNotificationModal = () => {
+        notificationModalOpen = false
+        document.getElementById('notification-modal')?.classList.add('hidden')
+    }
+
+// Global Search Logic
+let searchModalOpen = false
+
+function createSearchResultsModal(): HTMLElement {
+    const modal = document.createElement('div')
+    modal.id = 'search-results-modal'
+    modal.className = 'fixed inset-0 z-[90] hidden bg-black/80 backdrop-blur-sm pt-24 px-4' // Top padding for header
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) (window as any).closeSearchModal();
+    })
+
+    modal.innerHTML = `
+        <div class="max-w-4xl mx-auto w-full bg-[#1a1a1a] rounded-2xl border border-white/10 shadow-2xl overflow-hidden animate-fade-in-up">
+             <div class="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-white/5">
+                <h3 class="text-white font-bold text-lg">Search Results</h3>
+                <button onclick="window.closeSearchModal()" class="text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="search-results-content" class="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar space-y-8">
+                <!-- Results injected here -->
+            </div>
+        </div>
+    `
+    return modal
+}
+
+function handleGlobalSearch(query: string) {
+    const modal = document.getElementById('search-results-modal')
+    const content = document.getElementById('search-results-content')
+    if (!modal || !content) return
+
+    if (!query || query.trim().length === 0) {
+        (window as any).closeSearchModal()
+        return
+    }
+
+    const q = query.toLowerCase()
+
+    // Filter Games
+    const matchingGames = games.filter(g =>
+        g.name.toLowerCase().includes(q) ||
+        g.description?.toLowerCase().includes(q) ||
+        g.genres.some(gen => gen.toLowerCase().includes(q))
+    )
+
+    // Filter Studios
+    const matchingStudios = studios.filter(s =>
+        s.name.toLowerCase().includes(q) ||
+        s.description?.toLowerCase().includes(q)
+    )
+
+    if (matchingGames.length === 0 && matchingStudios.length === 0) {
+        content.innerHTML = '<div class="text-center text-gray-500 py-8">No results found</div>'
+    } else {
+        let html = ''
+
+        if (matchingGames.length > 0) {
+            html += `
+                <div>
+                    <h4 class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">Games</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        ${matchingGames.map(g => `
+                            <div class="flex items-center gap-4 p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer border border-white/5 hover:border-white/10 group" onclick="window.openGameDetail(convertGame(window.games.find(x => x.id === '${g.id}'))); window.closeSearchModal();">
+                                ${g.logo ? `<img src="${g.logo}" class="w-12 h-12 object-contain rounded-lg bg-black/50 p-1">` : `<div class="w-12 h-12 bg-violet-600 rounded-lg flex items-center justify-center font-bold text-white">${g.name[0]}</div>`}
+                                <div>
+                                    <h5 class="text-white font-bold group-hover:text-violet-400 transition-colors">${g.name}</h5>
+                                    <p class="text-xs text-gray-500 line-clamp-1">${g.ownedBy}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `
+        }
+
+        if (matchingStudios.length > 0) {
+            html += `
+                <div>
+                    <h4 class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-4">Studios</h4>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        ${matchingStudios.map(s => `
+                            <div class="p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer border border-white/5 hover:border-white/10 text-center group" onclick="window.openSocials('${s.name}'); window.closeSearchModal();">
+                                <div class="w-12 h-12 mx-auto rounded-full bg-gradient-to-br from-gray-700 to-gray-900 mb-3 overflow-hidden flex items-center justify-center">
+                                     ${s.logo ? `<img src="${s.logo}" class="w-full h-full object-cover">` : `<span class="text-xs text-white font-bold">${s.name.substring(0, 2).toUpperCase()}</span>`}
+                                </div>
+                                <h5 class="text-white text-sm font-bold group-hover:text-violet-400 transition-colors">${s.name}</h5>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `
+        }
+
+        content.innerHTML = html
+    }
+
+    if (!searchModalOpen) {
+        modal.classList.remove('hidden')
+        searchModalOpen = true
+    }
+}
+
+; (window as any).closeSearchModal = () => {
+    const modal = document.getElementById('search-results-modal')
+    if (modal) modal.classList.add('hidden')
+    searchModalOpen = false
+    // Clear input if needed, but keeping it might be better UX
+}
+
+    // Expose games to window for the onclick handler in template string
+    ; (window as any).games = []; // Will be populated in initApp
+; (window as any).convertGame = null; // Will be assigned
+
 function updateNotificationBadge() {
     const badge = document.getElementById('notification-badge')
     const activeNotifs = notifications.filter(n => n.active)
@@ -676,6 +795,10 @@ export async function initApp(): Promise<void> {
         notifications = notifsRes as GameNotification[]
         studios = studiosRes as Studio[]
         siteConfig = configRes as SiteConfig | null
+
+            // Expose to window for search modal
+            ; (window as any).games = games;
+        ; (window as any).convertGame = convertGame;
     } catch (e) { console.error('Failed to fetch:', e); games = []; notifications = []; studios = [] }
 
     // Build Carousel Items from Studios
@@ -715,7 +838,11 @@ export async function initApp(): Promise<void> {
         { label: 'GAMES', href: '#' }, // Will intercept
     ]
 
-    const header = createHeader({ carouselItems: carouselItems, navLinks: NAV_LINKS })
+    const header = createHeader({
+        carouselItems: carouselItems,
+        navLinks: NAV_LINKS,
+        onSearch: (query) => handleGlobalSearch(query)
+    })
     const navContainer = header.querySelector('nav > div:last-child')
     if (navContainer) navContainer.appendChild(createNotificationButton())
 
@@ -771,6 +898,7 @@ export async function initApp(): Promise<void> {
     app.appendChild(createNotificationModal())
     app.appendChild(createStudiosModal())
     app.appendChild(createGamesModal())
+    app.appendChild(createSearchResultsModal())
 
     // Cookie Consent
     app.appendChild(createCookieConsent())

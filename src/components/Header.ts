@@ -13,6 +13,7 @@ export interface NavLink {
 export interface HeaderConfig {
     carouselItems: ReadonlyArray<CarouselItem>
     navLinks: ReadonlyArray<NavLink>
+    onSearch?: (query: string) => void
 }
 
 // Search icon SVG
@@ -107,6 +108,11 @@ export function createHeader(config: HeaderConfig): HTMLElement {
         placeholder-gray-500
         outline-none
     `.trim().replace(/\s+/g, ' ')
+
+    searchInput.addEventListener('input', (e) => {
+        const query = (e.target as HTMLInputElement).value
+        if (config.onSearch) config.onSearch(query)
+    })
 
     searchWrapper.appendChild(searchIconSpan)
     searchWrapper.appendChild(searchInput)
