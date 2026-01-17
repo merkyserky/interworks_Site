@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Moon, Sun, Monitor, Palette, Bell, Shield, User as UserIcon, Key, Minimize2 } from 'lucide-react'
 import { Button } from '@panel/components/ui/button'
 import { Label } from '@panel/components/ui/label'
@@ -26,6 +26,30 @@ export function SettingsView({ currentUser, theme, setTheme, compactMode, setCom
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+    // Site Config
+    const [config, setConfig] = useState<any>(null);
+    const [savingConfig, setSavingConfig] = useState(false);
+
+    useEffect(() => {
+        if (currentUser?.role === 'admin') {
+            api.get('/api/config')
+                .then(data => setConfig(data))
+                .catch(err => console.error('Failed to load config', err));
+        }
+    }, [currentUser]);
+
+    const handleSaveConfig = async () => {
+        setSavingConfig(true);
+        try {
+            await api.put('/api/config', config);
+            notify.success('Configuration saved successfully');
+        } catch (e) {
+            notify.error('Failed to save configuration: ' + e);
+        } finally {
+            setSavingConfig(false);
+        }
+    };
 
     const themeOptions: { value: 'dark' | 'light' | 'system'; label: string; icon: typeof Moon }[] = [
         { value: 'dark', label: 'Dark', icon: Moon },
@@ -210,6 +234,68 @@ export function SettingsView({ currentUser, theme, setTheme, compactMode, setCom
                     />
                 </div>
             </section>
+
+            {/* Global Config Section - Admin Only */}
+            {currentUser?.role === 'admin' && config && (
+                <section className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden">
+                    <div className="p-4 border-b border-slate-800 flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+                            <Monitor size={18} />
+                        </div>
+                        <h2 className="font-semibold text-slate-100">Global Site Configuration</h2>
+                    </div>
+                    <div className="p-4 sm:p-6 space-y-6">
+                        {/* Special Countdown Config */}
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <Label className="text-slate-200">Special Countdown Mode</Label>
+                                    <p className="text-sm text-slate-500">Replaces the main hero with a fullscreen countdown</p>
+                                </div>
+                                <Toggle
+                                    checked={config?.specialCountdown?.enabled || false}
+                                    onChange={(checked) => setConfig({ ...config, specialCountdown: { ...config.specialCountdown, enabled: checked } })}
+                                />
+                            </div>
+
+                            {config?.specialCountdown?.enabled && (
+                                <div className="space-y-4 pl-4 border-l-2 border-slate-800 animate-in fade-in slide-in-from-top-2">
+                                    <div className="space-y-2">
+                                        <Label>Title</Label>
+                                        <Input
+                                            value={config.specialCountdown.title}
+                                            onChange={e => setConfig({ ...config, specialCountdown: { ...config.specialCountdown, title: e.target.value } })}
+                                            placeholder="e.g. SOMETHING BIG IS COMING"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Description</Label>
+                                        <Input
+                                            value={config.specialCountdown.description}
+                                            onChange={e => setConfig({ ...config, specialCountdown: { ...config.specialCountdown, description: e.target.value } })}
+                                            placeholder="Description..."
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Target Date</Label>
+                                        <Input
+                                            type="datetime-local"
+                                            value={config.specialCountdown.targetDate ? new Date(config.specialCountdown.targetDate).toISOString().slice(0, 16) : ''}
+                                            onChange={e => setConfig({ ...config, specialCountdown: { ...config.specialCountdown, targetDate: new Date(e.target.value).toISOString() } })}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="pt-4 flex justify-end border-t border-slate-800">
+                            <Button onClick={handleSaveConfig} disabled={savingConfig} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                                {savingConfig ? 'Saving...' : 'Save Configuration'}
+                            </Button>
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* Danger Zone - Only for admins */}
             {currentUser?.role === 'admin' && (

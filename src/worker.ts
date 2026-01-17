@@ -117,6 +117,24 @@ interface ActivityLogEntry {
     details?: string;
 }
 
+interface SiteConfig {
+    specialCountdown: {
+        enabled: boolean;
+        title: string;
+        description: string;
+        targetDate: string; // ISO date
+    }
+}
+
+const DEFAULT_CONFIG: SiteConfig = {
+    specialCountdown: {
+        enabled: false,
+        title: "Something Big is Coming",
+        description: "Get ready for the next evolution.",
+        targetDate: ""
+    }
+};
+
 // Default data
 const DEFAULT_STUDIOS: Studio[] = [
     { id: 'interworks', name: 'Interworks Inc', description: 'The main studio.', discord: 'https://discord.gg/C2wGG8KHRr', roblox: 'https://www.roblox.com/communities/34862200/Interworks-Inc#!/', hero: true },
@@ -1009,6 +1027,34 @@ export default {
                     return jsonResponse(logs);
                 }
 
+                // Site Config (Admin only)
+                if (pathname === '/api/config' && request.method === 'GET') {
+                    // Admins can see raw config
+                    if (currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
+                    let config = await env.GAMES_DATABASE.get('site_config', 'json') as SiteConfig | null;
+                    if (!config) config = DEFAULT_CONFIG;
+                    return jsonResponse(config);
+                }
+                if (pathname === '/api/config' && request.method === 'PUT') {
+                    if (currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
+                    let config = await env.GAMES_DATABASE.get('site_config', 'json') as SiteConfig | null || DEFAULT_CONFIG;
+                    const updates = await request.json() as Partial<SiteConfig>;
+
+                    config = { ...config, ...updates, specialCountdown: { ...config.specialCountdown, ...updates.specialCountdown } };
+                    await env.GAMES_DATABASE.put('site_config', JSON.stringify(config));
+
+                    // Log activity
+                    await logActivity(env, {
+                        type: 'update',
+                        entityType: 'studio', // Using 'studio' as entity type for lack of 'config' type in interface, or add new type
+                        entityId: 'global-config',
+                        entityName: 'Global Site Config',
+                        user: currentUser.username
+                    });
+
+                    return jsonResponse(config);
+                }
+
                 return jsonResponse({ error: 'Not found' }, 404);
             }
 
@@ -1043,6 +1089,11 @@ export default {
             let studios = await env.GAMES_DATABASE.get('studios', 'json') as Studio[] | null;
             if (!studios) studios = DEFAULT_STUDIOS;
             return jsonResponse(studios);
+        }
+        if (url.pathname === '/api/config') {
+            let config = await env.GAMES_DATABASE.get('site_config', 'json') as SiteConfig | null;
+            if (!config) config = DEFAULT_CONFIG;
+            return jsonResponse(config);
         }
 
         // Public analytics tracking endpoint (accepts POST with minimal data)

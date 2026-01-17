@@ -36,6 +36,16 @@ interface GameEvent {
 interface Game { id: string; name: string; logo: string; description: string; ownedBy: string; status: 'coming-soon' | 'playable' | 'beta' | 'in-development'; genres: string[]; youtubeVideoId?: string; thumbnails?: string[]; spotifyAlbums?: SpotifyAlbum[]; link?: string; order?: number; visible?: boolean; events?: GameEvent[]; }
 interface Studio { id: string; name: string; description?: string; logo?: string; thumbnail?: string; hero?: boolean; media?: string[]; discord?: string; roblox?: string; youtube?: string; }
 
+interface SiteConfig {
+    specialCountdown: {
+        enabled: boolean;
+        title: string;
+        description: string;
+        targetDate: string;
+    }
+}
+
+
 // Modifying CONFIG to support new modals
 const SITE_CONFIG = {
     company: { name: 'ASTRAL CORE + INTERWORKS INC', displayName: 'Astral Core + Interworks Inc' },
@@ -67,6 +77,7 @@ function convertGame(game: Game) {
 let notifications: GameNotification[] = []
 let games: Game[] = []
 let studios: Studio[] = []
+let siteConfig: SiteConfig | null = null
 let notificationModalOpen = false
 let studiosModalOpen = false
 let gamesModalOpen = false
@@ -480,20 +491,108 @@ function updateNotificationBadge() {
     document.getElementById('notification-modal')?.classList.add('hidden')
 }
 
+// Special Countdown Hero Component
+function createSpecialCountdownHero(config: SiteConfig['specialCountdown']): HTMLElement {
+    const section = document.createElement('section');
+    section.className = 'relative w-full h-screen flex flex-col items-center justify-center overflow-hidden bg-black';
+    section.id = 'special-countdown-hero';
+
+    section.innerHTML = `
+        <div class="absolute inset-0 bg-[url('/astral_hero_background.png')] bg-cover bg-center opacity-30 blur-2xl scale-110 animate-pulse-slow"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/40"></div>
+        
+        <div class="relative z-10 text-center px-6 max-w-5xl mx-auto flex flex-col items-center animate-fade-in-up">
+            <h1 class="text-6xl md:text-8xl lg:text-9xl font-black text-white tracking-tighter mb-8 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] uppercase font-display leading-tight">
+                ${config.title}
+            </h1>
+            <p class="text-2xl md:text-3xl text-gray-300 font-light mb-16 max-w-3xl leading-relaxed tracking-wide">
+                ${config.description}
+            </p>
+            
+            <div class="grid grid-cols-4 gap-4 md:gap-12 text-center mb-16">
+                 <div class="flex flex-col items-center gap-2">
+                    <div class="text-5xl md:text-7xl lg:text-8xl font-black text-white font-mono bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400" id="sc-days">00</div>
+                    <div class="text-xs md:text-sm text-gray-500 uppercase tracking-[0.2em] font-bold">Days</div>
+                 </div>
+                 <div class="flex flex-col items-center gap-2">
+                    <div class="text-5xl md:text-7xl lg:text-8xl font-black text-white font-mono bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400" id="sc-hours">00</div>
+                    <div class="text-xs md:text-sm text-gray-500 uppercase tracking-[0.2em] font-bold">Hours</div>
+                 </div>
+                 <div class="flex flex-col items-center gap-2">
+                    <div class="text-5xl md:text-7xl lg:text-8xl font-black text-white font-mono bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400" id="sc-mins">00</div>
+                    <div class="text-xs md:text-sm text-gray-500 uppercase tracking-[0.2em] font-bold">Minutes</div>
+                 </div>
+                 <div class="flex flex-col items-center gap-2">
+                    <div class="text-5xl md:text-7xl lg:text-8xl font-black text-white font-mono bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400" id="sc-secs">00</div>
+                    <div class="text-xs md:text-sm text-gray-500 uppercase tracking-[0.2em] font-bold">Seconds</div>
+                 </div>
+            </div>
+        </div>
+
+        <audio id="countdown-audio" loop src="/clock.wav"></audio>
+        <button id="unmute-btn" class="absolute bottom-10 right-10 z-50 p-4 bg-white/10 hover:bg-white/20 backdrop-blur-xl rounded-full text-white transition-all hidden animate-pulse">
+             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+        </button>
+    `;
+
+    setTimeout(() => {
+        // Audio Logic
+        const audio = section.querySelector('audio') as HTMLAudioElement;
+        const btn = section.querySelector('#unmute-btn') as HTMLButtonElement;
+
+        if (audio && btn) {
+            audio.volume = 0.5;
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(() => {
+                    // Autoplay blocked
+                    btn.classList.remove('hidden');
+                    btn.onclick = () => {
+                        audio.play();
+                        btn.classList.add('hidden');
+                    };
+                });
+            }
+        }
+    }, 100);
+
+    return section;
+}
+
+function startSpecialCountdownLoader(targetDate: string) {
+    if (countdownInterval) clearInterval(countdownInterval);
+
+    const update = () => {
+        const cd = formatCountdown(targetDate);
+        if (cd) {
+            const dayEl = document.getElementById('sc-days'); if (dayEl) dayEl.textContent = String(cd.days).padStart(2, '0');
+            const hrEl = document.getElementById('sc-hours'); if (hrEl) hrEl.textContent = String(cd.hours).padStart(2, '0');
+            const minEl = document.getElementById('sc-mins'); if (minEl) minEl.textContent = String(cd.minutes).padStart(2, '0');
+            const secEl = document.getElementById('sc-secs'); if (secEl) secEl.textContent = String(cd.seconds).padStart(2, '0');
+        }
+    };
+
+    update();
+    countdownInterval = window.setInterval(update, 1000);
+}
+
+
 export async function initApp(): Promise<void> {
     const app = document.getElementById('app')
     if (!app) { console.error('❌ App container not found'); return }
 
     // Fetch data
     try {
-        const [gamesRes, notifsRes, studiosRes] = await Promise.all([
+        const [gamesRes, notifsRes, studiosRes, configRes] = await Promise.all([
             fetch('/api/games').then(r => r.json()),
             fetch('/api/announcements').then(r => r.json()),
-            fetch('/api/studios').then(r => r.json())
+            fetch('/api/studios').then(r => r.json()),
+            fetch('/api/config').then(r => r.json()).catch(() => null)
         ])
         games = gamesRes as Game[]
         notifications = notifsRes as GameNotification[]
         studios = studiosRes as Studio[]
+        siteConfig = configRes as SiteConfig | null
     } catch (e) { console.error('Failed to fetch:', e); games = []; notifications = []; studios = [] }
 
     // Build Carousel Items from Studios
@@ -551,19 +650,29 @@ export async function initApp(): Promise<void> {
 
     app.appendChild(header)
 
-    const hero = createHero({ carouselItems: carouselItems, ctaText: SITE_CONFIG.hero.ctaText, ctaHref: SITE_CONFIG.hero.ctaHref })
-    // Hijack Hero CTA as well
-    const heroBtn = hero.querySelector('a')
-    if (heroBtn) {
-        heroBtn.addEventListener('click', (e) => { e.preventDefault(); (window as any).toggleGamesModal(); })
-    }
+    app.appendChild(header)
 
-    // Inject hero countdown widget into hero content
-    const heroContent = hero.querySelector('.max-w-7xl')
-    if (heroContent) {
-        heroContent.appendChild(createHeroCountdownWidget())
+    // CHECK FOR SPECIAL COUNTDOWN MODE
+    if (siteConfig && siteConfig.specialCountdown && siteConfig.specialCountdown.enabled) {
+        // Render Special Countdown
+        const hero = createSpecialCountdownHero(siteConfig.specialCountdown);
+        app.appendChild(hero);
+    } else {
+        // Standard Hero
+        const hero = createHero({ carouselItems: carouselItems, ctaText: SITE_CONFIG.hero.ctaText, ctaHref: SITE_CONFIG.hero.ctaHref })
+        // Hijack Hero CTA as well
+        const heroBtn = hero.querySelector('a')
+        if (heroBtn) {
+            heroBtn.addEventListener('click', (e) => { e.preventDefault(); (window as any).toggleGamesModal(); })
+        }
+
+        // Inject hero countdown widget into hero content
+        const heroContent = hero.querySelector('.max-w-7xl')
+        if (heroContent) {
+            heroContent.appendChild(createHeroCountdownWidget())
+        }
+        app.appendChild(hero)
     }
-    app.appendChild(hero)
 
     app.appendChild(createHeroFooter({ companyName: SITE_CONFIG.company.displayName, year: 2026 }))
 
@@ -585,8 +694,14 @@ export async function initApp(): Promise<void> {
     app.appendChild(createCookieConsent())
 
     updateNotificationBadge()
-    updateHeroCountdown()
-    startCountdownTicker() // Start live updates
+    updateNotificationBadge()
+
+    if (siteConfig?.specialCountdown?.enabled) {
+        startSpecialCountdownLoader(siteConfig.specialCountdown.targetDate);
+    } else {
+        updateHeroCountdown()
+        startCountdownTicker() // Start live updates for standard mode
+    }
 
     // Hide loading skeleton after content is ready
     setTimeout(() => hideLoadingSkeleton(), 300)
