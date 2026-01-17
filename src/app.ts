@@ -553,6 +553,19 @@ function createSpecialCountdownHero(config: SiteConfig['specialCountdown']): HTM
                     };
                 });
             }
+
+            // Volume Fade on Scroll Calculation
+            const maxVol = 0.5;
+            const handleScroll = () => {
+                const scrollY = window.scrollY;
+                const heroHeight = window.innerHeight;
+                // Fade out as we scroll down the hero section
+                // 1.0 at top, 0.0 at bottom
+                const fadeFactor = 1 - Math.min(scrollY / (heroHeight * 0.8), 1);
+                audio.volume = Math.max(0, Math.min(maxVol, maxVol * fadeFactor));
+            };
+
+            window.addEventListener('scroll', handleScroll, { passive: true });
         }
     }, 100);
 
