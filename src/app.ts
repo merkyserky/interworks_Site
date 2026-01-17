@@ -346,16 +346,19 @@ function createGamesModal(): HTMLElement {
         .filter(g => g.visible !== false)
         .sort((a, b) => (a.order || 0) - (b.order || 0))
 
-    // Create specific modal cards for consistency with badge on top-right of image
-    const gamesList = visibleGames.map(g => `
+    // Render function for games list
+    const renderGamesList = (gamesToRender: Game[]) => {
+        if (gamesToRender.length === 0) return '<p class="text-gray-500 text-center col-span-full py-12 font-semibold">No games found.</p>'
+
+        return gamesToRender.map(g => `
         <div class="relative group bg-[#161616] border border-white/10 rounded-2xl overflow-hidden hover:border-violet-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-violet-900/20 hover:-translate-y-1 flex flex-col h-full">
              <div class="aspect-video relative overflow-hidden bg-black/50 shrink-0">
                  ${g.thumbnails && g.thumbnails.length > 0
-            ? `<img src="${g.thumbnails[0]}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">`
-            : g.logo
-                ? `<img src="${g.logo}" class="w-full h-full object-cover blur-sm opacity-50"><img src="${g.logo}" class="absolute inset-0 w-2/3 h-2/3 m-auto object-contain z-10">`
-                : `<div class="w-full h-full flex items-center justify-center text-gray-600">No Image</div>`
-        }
+                ? `<img src="${g.thumbnails[0]}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">`
+                : g.logo
+                    ? `<img src="${g.logo}" class="w-full h-full object-cover blur-sm opacity-50"><img src="${g.logo}" class="absolute inset-0 w-2/3 h-2/3 m-auto object-contain z-10">`
+                    : `<div class="w-full h-full flex items-center justify-center text-gray-600">No Image</div>`
+            }
                  <div class="absolute inset-0 bg-gradient-to-t from-[#161616] via-transparent to-transparent opacity-80"></div>
                  <!-- Status Badge - Top Right Corner of Image -->
                  ${g.status ? `<div class="absolute top-3 right-3">${getStatusBadge(g.status)}</div>` : ''}
@@ -366,11 +369,11 @@ function createGamesModal(): HTMLElement {
                     <div class="min-w-0 flex-1">
                         <h3 class="text-base font-extrabold text-white leading-tight group-hover:text-violet-400 transition-colors truncate">${g.name}</h3>
                         ${(() => {
-            const studio = studios.find(s => s.name === g.ownedBy);
-            return studio?.discord
-                ? `<a href="${studio.discord}" target="_blank" class="text-[10px] text-gray-500 uppercase tracking-widest font-bold hover:text-violet-400 transition-colors flex items-center gap-1 mt-0.5">BY: ${g.ownedBy} <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037 13.486 13.486 0 00-.594 1.226c-2.176-.328-4.352-.328-6.505 0a13.482 13.482 0 00-.602-1.226.075.075 0 00-.079-.037A19.736 19.736 0 002.66 4.37a.072.072 0 00-.03.047C.612 10.976 1.765 17.58 4.295 21.054a.077.077 0 00.088.026 19.988 19.988 0 006.014-3.03.076.076 0 00.038-.052 14.167 14.167 0 01-2.261-1.077.073.073 0 01.002-.122 10.02 10.02 0 00.916-.445.075.075 0 01.078.006 14.28 14.28 0 004.977 1.018 14.285 14.285 0 004.982-1.018.075.075 0 01.078-.006 10.063 10.063 0 00.911.445.074.074 0 01.003.122 14.074 14.074 0 01-2.266 1.077.075.075 0 00.037.052 19.967 19.967 0 006.02 3.03.078.078 0 00.087-.026c2.617-3.593 3.738-10.292 1.638-16.637a.072.072 0 00-.03-.047z"/></svg></a>`
-                : `<p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-0.5">BY: ${g.ownedBy}</p>`
-        })()}
+                const studio = studios.find(s => s.name === g.ownedBy);
+                return studio?.discord
+                    ? `<a href="${studio.discord}" target="_blank" class="text-[10px] text-gray-500 uppercase tracking-widest font-bold hover:text-violet-400 transition-colors flex items-center gap-1 mt-0.5">BY: ${g.ownedBy} <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037 13.486 13.486 0 00-.594 1.226c-2.176-.328-4.352-.328-6.505 0a13.482 13.482 0 00-.602-1.226.075.075 0 00-.079-.037A19.736 19.736 0 002.66 4.37a.072.072 0 00-.03.047C.612 10.976 1.765 17.58 4.295 21.054a.077.077 0 00.088.026 19.988 19.988 0 006.014-3.03.076.076 0 00.038-.052 14.167 14.167 0 01-2.261-1.077.073.073 0 01.002-.122 10.02 10.02 0 00.916-.445.075.075 0 01.078.006 14.28 14.28 0 004.977 1.018 14.285 14.285 0 004.982-1.018.075.075 0 01.078-.006 10.063 10.063 0 00.911.445.074.074 0 01.003.122 14.074 14.074 0 01-2.266 1.077.075.075 0 00.037.052 19.967 19.967 0 006.02 3.03.078.078 0 00.087-.026c2.617-3.593 3.738-10.292 1.638-16.637a.072.072 0 00-.03-.047z"/></svg></a>`
+                    : `<p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-0.5">BY: ${g.ownedBy}</p>`
+            })()}
                     </div>
                  </div>
                  <p class="text-sm text-gray-400 line-clamp-2 mb-4 leading-relaxed">${g.description}</p>
@@ -379,31 +382,68 @@ function createGamesModal(): HTMLElement {
                  </div>
                   <div class="flex gap-3 w-full mt-4 pt-4 border-t border-white/5">
                       ${g.link ? `<a href="${g.link}" target="_blank" class="flex-1 block w-full text-center py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-xl transition-all text-sm font-bold shadow-lg shadow-violet-900/30 hover:shadow-violet-900/50 hover:scale-[1.02]">Play Now</a>` : ''}
-                      <button onclick="window.openGameDetail({id: '${g.id}', name: '${g.name.replace(/'/g, "\\'")}', logo: '${g.logo}', description: '${(g.description || '').replace(/'/g, "\\'")}', ownedBy: '${g.ownedBy}', status: '${g.status}', genres: [${g.genres.map(x => `'${x}'`).join(',')}], link: '${g.link || ''}', youtubeVideoId: '${g.youtubeVideoId || ''}', thumbnails: [${(g.thumbnails || []).map(x => `'${x}'`).join(',')}] })" class="flex-1 block w-full text-center py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all text-sm font-bold border border-white/10">More Details</button>
+                      <button onclick="window.openGameDetail({id: '${g.id}', name: '${g.name.replace(/'/g, "\\'")}', logo: '${g.logo}', description: '${(g.description || '').replace(/'/g, "\\'")}', ownedBy: '${g.ownedBy}', status: '${g.status}', genres: [${g.genres.map(x => `'${x}'`).join(',')}], link: '${g.link || ''}', youtubeVideoId: '${g.youtubeVideoId || ''}', thumbnails: [${(g.thumbnails || []).map(x => `'${x}'`).join(',')}] })" class="flex-1 inline-flex items-center justify-center gap-2 block w-full text-center py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all text-sm font-bold border border-white/10">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 16v-4"/>
+                            <path d="M12 8h.01"/>
+                        </svg>
+                        More Details
+                      </button>
                   </div>
               </div>
          </div>
      `).join('')
+    }
 
     modal.innerHTML = `
         <div class="absolute inset-0 bg-black/85 backdrop-blur-lg" onclick="window.closeGamesModal()"></div>
         <div class="relative w-full max-w-6xl h-[85vh] bg-[#0f0f0f] rounded-3xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-fade-in-up">
-             <div class="px-8 py-6 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-violet-500/10 to-purple-500/10 shrink-0">
+             <div class="px-8 py-6 border-b border-white/10 flex flex-col md:flex-row gap-4 items-center justify-between bg-gradient-to-r from-violet-500/10 to-purple-500/10 shrink-0">
                 <div>
                     <h2 class="text-3xl font-black text-white tracking-tight">All Games</h2>
                     <p class="text-gray-400 text-sm font-medium mt-1">Explore our collection of games</p>
                 </div>
-                <button onclick="window.closeGamesModal()" class="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all hover:rotate-90 duration-300">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
+                
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <!-- Search Bar -->
+                    <div class="relative w-full md:w-64">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <input type="text" id="games-search" placeholder="Search games..." class="w-full bg-black/40 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 transition-all">
+                    </div>
+
+                    <button onclick="window.closeGamesModal()" class="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all hover:rotate-90 duration-300 shrink-0">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
             </div>
             <div class="p-8 overflow-y-auto custom-scrollbar flex-1">
-                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    ${gamesList.length ? gamesList : '<p class="text-gray-500 text-center col-span-full py-12 font-semibold">No games visible currently.</p>'}
+                 <div id="games-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${renderGamesList(visibleGames)}
                  </div>
             </div>
         </div>
     `
+
+    // Search functionality
+    setTimeout(() => {
+        const searchInput = modal.querySelector('#games-search') as HTMLInputElement
+        const grid = modal.querySelector('#games-grid')
+
+        if (searchInput && grid) {
+            searchInput.addEventListener('input', (e) => {
+                const query = (e.target as HTMLInputElement).value.toLowerCase()
+                const filtered = visibleGames.filter(g =>
+                    g.name.toLowerCase().includes(query) ||
+                    g.description?.toLowerCase().includes(query) ||
+                    g.ownedBy?.toLowerCase().includes(query) ||
+                    g.genres.some(gen => gen.toLowerCase().includes(query))
+                )
+                grid.innerHTML = renderGamesList(filtered)
+            })
+        }
+    }, 100)
+
     return modal
 }
 

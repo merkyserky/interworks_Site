@@ -229,11 +229,7 @@ export function openGameDetailModal(game: GameDetail): void {
     setTimeout(() => {
         const container = document.getElementById('share-buttons-container');
         if (container) {
-            container.appendChild(createShareButtons({
-                name: game.name,
-                link: game.link,
-                description: game.description
-            }));
+            container.appendChild(createShareButtons(game));
         }
     }, 100);
 
