@@ -660,7 +660,6 @@ export async function initApp(): Promise<void> {
     // UPDATED Navigation Links
     const NAV_LINKS = [
         { label: 'GAMES', href: '#' }, // Will intercept
-        { label: 'STUDIOS', href: '#' }, // Will intercept
     ]
 
     const header = createHeader({ carouselItems: carouselItems, navLinks: NAV_LINKS })
