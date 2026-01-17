@@ -227,14 +227,15 @@ function createNotificationModal(): HTMLElement {
     modal.className = 'fixed inset-0 z-[100] hidden'
     modal.innerHTML = `
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="window.closeNotificationModal()"></div>
-        <div class="absolute top-20 right-4 sm:right-8 w-full max-w-md bg-[#1a1a1a] rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
-            <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between">
-                <h2 class="text-lg font-semibold text-white">Notifications</h2>
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="window.closeNotificationModal()"></div>
+        <div class="absolute top-16 right-4 md:right-8 w-full max-w-sm bg-[#1a1a1a] rounded-2xl border border-white/10 shadow-2xl overflow-hidden animate-fade-in-down origin-top-right">
+            <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+                <h2 class="text-sm font-bold text-white uppercase tracking-wider">Notifications</h2>
                 <button onclick="window.closeNotificationModal()" class="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            <div id="notification-list" class="max-h-[60vh] overflow-auto"></div>
+            <div id="notification-list" class="max-h-[60vh] overflow-y-auto custom-scrollbar"></div>
         </div>
     `
     return modal
@@ -347,8 +348,8 @@ function createGamesModal(): HTMLElement {
 
     // Create specific modal cards for consistency with badge on top-right of image
     const gamesList = visibleGames.map(g => `
-        <div class="relative group bg-[#161616] border border-white/10 rounded-2xl overflow-hidden hover:border-violet-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-violet-900/20 hover:-translate-y-1">
-             <div class="aspect-video relative overflow-hidden bg-black/50">
+        <div class="relative group bg-[#161616] border border-white/10 rounded-2xl overflow-hidden hover:border-violet-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-violet-900/20 hover:-translate-y-1 flex flex-col h-full">
+             <div class="aspect-video relative overflow-hidden bg-black/50 shrink-0">
                  ${g.thumbnails && g.thumbnails.length > 0
             ? `<img src="${g.thumbnails[0]}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">`
             : g.logo
@@ -359,9 +360,9 @@ function createGamesModal(): HTMLElement {
                  <!-- Status Badge - Top Right Corner of Image -->
                  ${g.status ? `<div class="absolute top-3 right-3">${getStatusBadge(g.status)}</div>` : ''}
              </div>
-             <div class="p-5">
+             <div class="p-5 flex flex-col flex-1">
                   <div class="flex items-center gap-3 mb-3">
-                    ${g.logo ? `<img src="${g.logo}" class="w-10 h-10 rounded-lg object-contain bg-black/50 p-1.5 border border-white/10 shadow-lg">` : ''}
+                    ${g.logo ? `<img src="${g.logo}" class="w-10 h-10 rounded-lg object-contain bg-black/50 p-1.5 border border-white/10 shadow-lg shrink-0">` : ''}
                     <div class="min-w-0 flex-1">
                         <h3 class="text-base font-extrabold text-white leading-tight group-hover:text-violet-400 transition-colors truncate">${g.name}</h3>
                         ${(() => {
@@ -373,13 +374,12 @@ function createGamesModal(): HTMLElement {
                     </div>
                  </div>
                  <p class="text-sm text-gray-400 line-clamp-2 mb-4 leading-relaxed">${g.description}</p>
-                 <div class="flex flex-wrap gap-1.5 mb-4">
+                 <div class="flex flex-wrap gap-1.5 mb-auto">
                      ${g.genres.slice(0, 3).map(gen => `<span class="text-[10px] px-2 py-1 bg-white/5 rounded-md text-gray-400 border border-white/5 font-medium">${gen}</span>`).join('')}
                  </div>
-                  <div class="flex gap-3 w-full mt-auto pt-2">
+                  <div class="flex gap-3 w-full mt-4 pt-4 border-t border-white/5">
                       ${g.link ? `<a href="${g.link}" target="_blank" class="flex-1 block w-full text-center py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-xl transition-all text-sm font-bold shadow-lg shadow-violet-900/30 hover:shadow-violet-900/50 hover:scale-[1.02]">Play Now</a>` : ''}
                       <button onclick="window.openGameDetail({id: '${g.id}', name: '${g.name.replace(/'/g, "\\'")}', logo: '${g.logo}', description: '${(g.description || '').replace(/'/g, "\\'")}', ownedBy: '${g.ownedBy}', status: '${g.status}', genres: [${g.genres.map(x => `'${x}'`).join(',')}], link: '${g.link || ''}', youtubeVideoId: '${g.youtubeVideoId || ''}', thumbnails: [${(g.thumbnails || []).map(x => `'${x}'`).join(',')}] })" class="flex-1 block w-full text-center py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all text-sm font-bold border border-white/10">More Details</button>
-                  </div>
                   </div>
               </div>
          </div>
