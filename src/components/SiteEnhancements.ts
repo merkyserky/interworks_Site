@@ -9,13 +9,13 @@ export function createCookieConsent(): HTMLElement {
     const banner = document.createElement('div');
     banner.id = 'cookie-consent';
 
-    // Check if already accepted
-    if (localStorage.getItem(COOKIE_KEY) === 'accepted') {
+    // Check if already responded (accepted or declined)
+    if (localStorage.getItem(COOKIE_KEY)) {
         banner.style.display = 'none';
         return banner;
     }
 
-    banner.className = 'fixed bottom-0 left-0 right-0 z-[999] p-4 md:p-6 bg-black/95 backdrop-blur-xl border-t border-white/10 transform translate-y-full animate-slide-up';
+    banner.className = 'fixed bottom-0 left-0 right-0 z-[9999] p-4 md:p-6 bg-black/95 backdrop-blur-xl border-t border-white/10 transform translate-y-full animate-slide-up';
     banner.innerHTML = `
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="flex-1 text-center md:text-left">

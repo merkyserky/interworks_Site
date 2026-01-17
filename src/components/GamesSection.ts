@@ -244,17 +244,32 @@ function createGameCard(game: Game): HTMLElement {
         const videoWrapper = document.createElement('div')
         videoWrapper.className = 'absolute inset-0'
         videoWrapper.style.pointerEvents = 'none'
-        videoWrapper.innerHTML = `
-      <iframe 
-        id="video-iframe-${game.id}"
-        class="absolute top-1/2 left-1/2 w-[200%] h-[200%] -translate-x-1/2 -translate-y-1/2"
-        src="https://www.youtube.com/embed/${game.youtubeVideoId}?autoplay=1&mute=1&loop=1&playlist=${game.youtubeVideoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        style="border: 0;"
-      ></iframe>
-    `
+        // Don't inject iframe immediately. Wait for intersection.
         videoBg.appendChild(videoWrapper)
         card.appendChild(videoBg)
+
+        // Intersection Observer for Video Lazy Loading
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    if (!videoWrapper.hasChildNodes() && isPlaying) {
+                        videoWrapper.innerHTML = `
+                            <iframe 
+                                id="video-iframe-${game.id}"
+                                class="absolute top-1/2 left-1/2 w-[200%] h-[200%] -translate-x-1/2 -translate-y-1/2"
+                                src="https://www.youtube.com/embed/${game.youtubeVideoId}?autoplay=1&mute=1&loop=1&playlist=${game.youtubeVideoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                style="border: 0;"
+                            ></iframe>
+                        `
+                    }
+                } else {
+                    // Remove iframe when out of view to save resources
+                    videoWrapper.innerHTML = ''
+                }
+            })
+        }, { rootMargin: '200px' }) // Loading slightly before view
+        observer.observe(card)
 
         const thumbnails = game.thumbnails || [game.logo]
         let currentThumbnailIndex = 0
@@ -309,6 +324,7 @@ function createGameCard(game: Game): HTMLElement {
             const iframe = document.getElementById(`video-iframe-${game.id}`) as HTMLIFrameElement
 
             if (isPlaying) {
+                // Pause Logic
                 if (iframe?.contentWindow) {
                     iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*')
                 }
@@ -321,8 +337,11 @@ function createGameCard(game: Game): HTMLElement {
                     thumbnailBg.classList.remove('opacity-0')
                     thumbnailBg.classList.add('opacity-100')
                     cycleThumbnails()
-                }, 2000)
+                    // Remove iframe to fully stop resource usage
+                    videoWrapper.innerHTML = ''
+                }, 500)
             } else {
+                // Play Logic
                 if (pauseTimeout) {
                     clearTimeout(pauseTimeout)
                     pauseTimeout = null
@@ -333,12 +352,24 @@ function createGameCard(game: Game): HTMLElement {
                 thumbnailBg.classList.remove('opacity-100')
                 thumbnailBg.classList.add('opacity-0')
 
-                if (iframe?.contentWindow) {
-                    iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*')
-                }
+                isPlaying = true
                 playPauseBtn.innerHTML = getPauseIcon()
                 playPauseBtn.title = 'Pause video'
-                isPlaying = true
+
+                // Re-inject iframe if missing
+                if (!videoWrapper.hasChildNodes()) {
+                    videoWrapper.innerHTML = `
+                            <iframe 
+                                id="video-iframe-${game.id}"
+                                class="absolute top-1/2 left-1/2 w-[200%] h-[200%] -translate-x-1/2 -translate-y-1/2"
+                                src="https://www.youtube.com/embed/${game.youtubeVideoId}?autoplay=1&mute=1&loop=1&playlist=${game.youtubeVideoId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                style="border: 0;"
+                            ></iframe>
+                        `
+                } else if (iframe?.contentWindow) {
+                    iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*')
+                }
             }
         }
 
