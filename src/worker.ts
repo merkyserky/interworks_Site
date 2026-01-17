@@ -123,6 +123,10 @@ interface SiteConfig {
         title: string;
         description: string;
         targetDate: string; // ISO date
+        logo?: string;
+        backgroundImage?: string;
+        youtubeVideoId?: string;
+        youtubeRevealDate?: string; // ISO date - when to start showing the video
     }
 }
 
@@ -131,7 +135,11 @@ const DEFAULT_CONFIG: SiteConfig = {
         enabled: false,
         title: "Something Big is Coming",
         description: "Get ready for the next evolution.",
-        targetDate: ""
+        targetDate: "",
+        logo: "",
+        backgroundImage: "/astral_hero_background.png",
+        youtubeVideoId: "",
+        youtubeRevealDate: ""
     }
 };
 

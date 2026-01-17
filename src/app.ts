@@ -42,6 +42,10 @@ interface SiteConfig {
         title: string;
         description: string;
         targetDate: string;
+        logo?: string;
+        backgroundImage?: string;
+        youtubeVideoId?: string;
+        youtubeRevealDate?: string;
     }
 }
 
@@ -497,11 +501,17 @@ function createSpecialCountdownHero(config: SiteConfig['specialCountdown']): HTM
     section.className = 'relative w-full h-screen flex flex-col items-center justify-center overflow-hidden bg-black';
     section.id = 'special-countdown-hero';
 
+    // Determine if video should be shown
+    const showVideo = config.youtubeVideoId && (!config.youtubeRevealDate || new Date(config.youtubeRevealDate).getTime() <= Date.now());
+    const bgImage = config.backgroundImage || '/astral_hero_background.png';
+
     section.innerHTML = `
-        <div class="absolute inset-0 bg-[url('/astral_hero_background.png')] bg-cover bg-center opacity-30 blur-2xl scale-110 animate-pulse-slow"></div>
+        <div class="absolute inset-0 bg-cover bg-center opacity-30 blur-2xl scale-110 animate-pulse-slow" style="background-image: url('${bgImage}')"></div>
         <div class="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/40"></div>
         
         <div class="relative z-10 text-center px-6 max-w-5xl mx-auto flex flex-col items-center animate-fade-in-up">
+            ${config.logo ? `<img src="${config.logo}" class="h-24 md:h-32 w-auto object-contain mb-8 drop-shadow-[0_0_25px_rgba(255,255,255,0.2)] animate-float" alt="Event Logo">` : ''}
+            
             <h1 class="text-6xl md:text-8xl lg:text-9xl font-black text-white tracking-tighter mb-8 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] uppercase font-display leading-tight">
                 ${config.title}
             </h1>
@@ -527,6 +537,13 @@ function createSpecialCountdownHero(config: SiteConfig['specialCountdown']): HTM
                     <div class="text-xs md:text-sm text-gray-500 uppercase tracking-[0.2em] font-bold">Seconds</div>
                  </div>
             </div>
+
+            ${showVideo ? `
+            <a href="https://youtube.com/watch?v=${config.youtubeVideoId}" target="_blank" class="group flex items-center gap-3 px-8 py-4 bg-red-600 hover:bg-red-500 text-white rounded-full font-bold text-lg transition-all hover:scale-105 shadow-[0_0_30px_rgba(220,38,38,0.4)] hover:shadow-[0_0_50px_rgba(220,38,38,0.6)]">
+                <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                <span>Watch Trailer</span>
+            </a>
+            ` : ''}
         </div>
 
         <audio id="countdown-audio" loop src="/clock.ogg"></audio>

@@ -281,8 +281,51 @@ export function SettingsView({ currentUser, theme, setTheme, compactMode, setCom
                                         <Input
                                             type="datetime-local"
                                             value={config.specialCountdown.targetDate ? new Date(config.specialCountdown.targetDate).toISOString().slice(0, 16) : ''}
-                                            onChange={e => setConfig({ ...config, specialCountdown: { ...config.specialCountdown, targetDate: new Date(e.target.value).toISOString() } })}
+                                            onChange={e => {
+                                                const d = e.target.value ? new Date(e.target.value).toISOString() : '';
+                                                setConfig({ ...config, specialCountdown: { ...config.specialCountdown, targetDate: d } })
+                                            }}
                                         />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label>Logo URL</Label>
+                                        <Input
+                                            value={config.specialCountdown.logo || ''}
+                                            onChange={e => setConfig({ ...config, specialCountdown: { ...config.specialCountdown, logo: e.target.value } })}
+                                            placeholder="https://example.com/logo.png"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Background Image URL</Label>
+                                        <Input
+                                            value={config.specialCountdown.backgroundImage || ''}
+                                            onChange={e => setConfig({ ...config, specialCountdown: { ...config.specialCountdown, backgroundImage: e.target.value } })}
+                                            placeholder="/astral_hero_background.png"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-800">
+                                        <div className="space-y-2">
+                                            <Label>YouTube Video ID</Label>
+                                            <Input
+                                                value={config.specialCountdown.youtubeVideoId || ''}
+                                                onChange={e => setConfig({ ...config, specialCountdown: { ...config.specialCountdown, youtubeVideoId: e.target.value } })}
+                                                placeholder="e.g. dQw4w9WgXcQ"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Reveal Video At</Label>
+                                            <Input
+                                                type="datetime-local"
+                                                value={config.specialCountdown.youtubeRevealDate ? new Date(config.specialCountdown.youtubeRevealDate).toISOString().slice(0, 16) : ''}
+                                                onChange={e => {
+                                                    const d = e.target.value ? new Date(e.target.value).toISOString() : '';
+                                                    setConfig({ ...config, specialCountdown: { ...config.specialCountdown, youtubeRevealDate: d } })
+                                                }}
+                                            />
+                                            <p className="text-xs text-slate-500">Leave empty to show immediately</p>
+                                        </div>
                                     </div>
                                 </div>
                             )}
